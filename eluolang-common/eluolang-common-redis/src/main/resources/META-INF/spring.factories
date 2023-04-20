@@ -1,0 +1,5 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.eluolang.common.redis.configure.RedisConfig,\
+  com.eluolang.common.redis.service.RedisService
+
+  

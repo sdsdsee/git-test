@@ -1,0 +1,3 @@
+com\eluolang\common\redis\service\RedisService.class
+com\eluolang\common\redis\configure\FastJson2JsonRedisSerializer.class
+com\eluolang\common\redis\configure\RedisConfig.class

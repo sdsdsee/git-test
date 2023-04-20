@@ -1,0 +1,3 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.eluolang.common.security.service.TokenService,\
+  com.eluolang.common.security.aspect.PreAuthorizeAspect

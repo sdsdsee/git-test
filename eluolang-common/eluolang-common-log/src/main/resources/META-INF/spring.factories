@@ -1,0 +1,6 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+  com.eluolang.common.log.aspect.LogAspect,\
+  com.eluolang.common.log.service.AsyncLogService,\
+  com.eluolang.common.log.factory.RemoteLogFallbackFactory
+
+  

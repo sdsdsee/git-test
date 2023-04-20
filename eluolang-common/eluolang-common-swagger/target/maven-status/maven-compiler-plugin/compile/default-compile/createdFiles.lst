@@ -1,0 +1,6 @@
+com\eluolang\common\swagger\config\SwaggerProperties.class
+com\eluolang\common\swagger\config\SwaggerAutoConfiguration.class
+com\eluolang\common\swagger\config\SwaggerProperties$Contact.class
+com\eluolang\common\swagger\annotation\EnableCustomSwagger2.class
+com\eluolang\common\swagger\config\SwaggerProperties$Authorization.class
+com\eluolang\common\swagger\config\SwaggerProperties$AuthorizationScope.class
