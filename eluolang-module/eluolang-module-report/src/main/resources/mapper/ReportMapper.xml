@@ -1,0 +1,240 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.module.report.mapper.ReportMapper">
+
+    <select id="selUserCount" resultType="com.eluolang.module.report.vo.SchoolNumberVo">
+        select count(eu.id) as total,
+               count(CASE WHEN eu.user_sex = 1 THEN eu.user_sex END) as man,
+               count(CASE WHEN eu.user_sex = 2 THEN eu.user_sex END) as woman
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               where pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+               and eu.is_delete = 0
+    </select>
+
+    <select id="heightAndWeightTestNum" resultType="com.eluolang.module.report.vo.TestSituationQueryVo">
+        select IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 1 END),0) as one,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 2 END),0) as two,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 3 END),0) as three,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 4 END),0) as four,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 5 END),0) as five,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 6 END),0) as six,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 7 END),0) as seven,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 8 END),0) as eight,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 9 END),0) as nine,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 10 END),0) as ten,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 11 END),0) as eleven,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 12 END),0) as twelve
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.test_project = #{proId} and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+               order by MONTH(eth.create_time)
+    </select>
+
+    <select id="selOverYearsTestScore" resultType="com.eluolang.module.report.vo.HeightAndWeightVo">
+        select IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and SUBSTRING_INDEX(eth.`data`,",",-1) <![CDATA[ < ]]> 18.5 END),0) as thin,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and SUBSTRING_INDEX(eth.`data`,",",-1) BETWEEN 18.5 AND 23.9 END),0) as normal,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and SUBSTRING_INDEX(eth.`data`,",",-1) BETWEEN 24.0 AND 32.0 END),0) as overweight,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and SUBSTRING_INDEX(eth.`data`,",",-1) <![CDATA[ > ]]> 32.0 END),0) as fat
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = #{proId} GROUP BY a.user_id,a.test_project)
+               <if test="sex == 1 || sex == 2">
+                  and eu.user_sex = #{sex}
+               </if>
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selMeasuredNumber" resultType="java.lang.Integer">
+        select count(DISTINCT eth.user_id)
+               from ell_test_history eth LEFT JOIN pf_depart pd on eth.org_id = pd.id
+               where eth.test_project in (35,43) and YEAR(eth.update_time) = #{year} and eth.user_sex = #{sex} and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                  and eth.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="visionTestNum" resultType="com.eluolang.module.report.vo.TestSituationQueryVo">
+        select IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 1 END),0) as one,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 2 END),0) as two,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 3 END),0) as three,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 4 END),0) as four,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 5 END),0) as five,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 6 END),0) as six,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 7 END),0) as seven,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 8 END),0) as eight,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 9 END),0) as nine,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 10 END),0) as ten,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 11 END),0) as eleven,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and MONTH(eth.update_time) = 12 END),0) as twelve
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.test_project = #{proId} and eth.`comment` = #{comment} and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+               order by MONTH(eth.create_time)
+    </select>
+
+    <select id="selOverYearsVisionScore" resultType="com.eluolang.module.report.vo.VisionTestScoreVo">
+        select IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and eth.`comment` = '近视' END),0) as myopia,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and eth.`comment` = '远视' END),0) as hyperopia,
+               IFNULL(sum(CASE when eth.update_time is not NULL then YEAR(eth.update_time) = #{year} and eth.`comment` = '正常' END),0) as normal
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = #{proId} GROUP BY a.user_id,a.test_project)
+               <if test="sex == 1 || sex == 2">
+                  and eu.user_sex = #{sex}
+               </if>
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                  and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selUnqualifiedUser" resultType="java.lang.String">
+        select eu.user_name
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = 43 GROUP BY a.user_id,a.test_project)
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selNearSevenDaysVision" resultType="com.eluolang.module.report.vo.VisionTestScoreVo">
+        select IFNULL(SUM(CASE when eth.update_time is not NULL then DATE_FORMAT(eth.update_time,"%Y-%m-%d") = #{day} and eth.`comment` = '近视' END),0) as myopia,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then DATE_FORMAT(eth.update_time,"%Y-%m-%d") = #{day} and eth.`comment` = '远视' END),0) as hyperopia,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then DATE_FORMAT(eth.update_time,"%Y-%m-%d") = #{day} and eth.`comment` = '正常' END),0) as normal
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = #{proId} GROUP BY a.user_id,a.test_project)
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selNearSevenDaysBMI" resultType="com.eluolang.module.report.vo.HeightAndWeightVo">
+        select IFNULL(sum(CASE when eth.update_time is not NULL then DATE_FORMAT(eth.update_time,"%Y-%m-%d") = #{day} and SUBSTRING_INDEX(eth.`data`,",",-1) <![CDATA[ < ]]> 18.5 END),0) as thin,
+               IFNULL(sum(CASE when eth.update_time is not NULL then DATE_FORMAT(eth.update_time,"%Y-%m-%d") = #{day} and SUBSTRING_INDEX(eth.`data`,",",-1) BETWEEN 18.5 AND 23.9 END),0) as normal,
+               IFNULL(sum(CASE when eth.update_time is not NULL then DATE_FORMAT(eth.update_time,"%Y-%m-%d") = #{day} and SUBSTRING_INDEX(eth.`data`,",",-1) BETWEEN 24.0 AND 32.0 END),0) as overweight,
+               IFNULL(sum(CASE when eth.update_time is not NULL then DATE_FORMAT(eth.update_time,"%Y-%m-%d") = #{day} and SUBSTRING_INDEX(eth.`data`,",",-1) <![CDATA[ > ]]> 32.0 END),0) as fat
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = #{proId} GROUP BY a.user_id,a.test_project)
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selVisionRatio" resultType="com.eluolang.module.report.vo.VisionTestScoreVo">
+        select IFNULL(SUM(CASE when eth.update_time is not NULL then eth.`comment` = '近视' END),0) as myopia,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then eth.`comment` = '远视' END),0) as hyperopia,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then eth.`comment` = '正常' END),0) as normal
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = #{proId} GROUP BY a.user_id,a.test_project)
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selBMIRatio" resultType="com.eluolang.module.report.vo.HeightAndWeightVo">
+        select IFNULL(sum(CASE when eth.update_time is not NULL then SUBSTRING_INDEX(eth.`data`,",",-1) <![CDATA[ < ]]> 18.5 END),0) as thin,
+               IFNULL(sum(CASE when eth.update_time is not NULL then SUBSTRING_INDEX(eth.`data`,",",-1) BETWEEN 18.5 AND 23.9 END),0) as normal,
+               IFNULL(sum(CASE when eth.update_time is not NULL then SUBSTRING_INDEX(eth.`data`,",",-1) BETWEEN 24.0 AND 32.0 END),0) as overweight,
+               IFNULL(sum(CASE when eth.update_time is not NULL then SUBSTRING_INDEX(eth.`data`,",",-1) <![CDATA[ > ]]> 32.0 END),0) as fat
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = #{proId} GROUP BY a.user_id,a.test_project)
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selVisionQualifiedRate" resultType="com.eluolang.module.report.vo.VisionQualifiedRateVo">
+        select IFNULL(SUM(CASE when eth.update_time is not NULL then eth.`comment` = '远视' or eth.`comment` = '近视' END),0) as unqualified,
+               IFNULL(SUM(CASE when eth.update_time is not NULL then eth.`comment` = '正常' END),0) as qualified
+               from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+               LEFT JOIN ell_test_history eth on eu.id = eth.user_id
+               where eth.update_time = (SELECT max(a.update_time) from ell_test_history a where a.user_id = eth.user_id and a.test_project = #{proId} GROUP BY a.user_id,a.test_project)
+               and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+               <if test="optId != 1 and optId != 2">
+                   and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+               </if>
+    </select>
+
+    <select id="selVisionByUserId" resultType="com.eluolang.common.core.pojo.EllEyesightParticulars">
+        select * from ell_eyesight_particulars eep where eep.create_time =
+        (SELECT max(a.create_time) from ell_eyesight_particulars a where a.user_id = eep.user_id
+        and DATE_FORMAT(a.create_time,"%Y-%m-%d" ) = #{date} GROUP BY a.user_id)
+        and eep.user_id = #{userId}
+    </select>
+
+    <select id="selBmiByUserId" resultType="com.eluolang.common.core.pojo.EllBmiParticulars">
+        select * from ell_bmi_particulars ebp where ebp.create_time =
+        (SELECT max(a.create_time) from ell_bmi_particulars a where a.user_id = ebp.user_id
+        and DATE_FORMAT(a.create_time,"%Y-%m-%d" ) = #{date}  GROUP BY a.user_id)
+        and ebp.user_id = #{userId}
+    </select>
+
+    <select id="selLastVisionTestById" resultType="com.eluolang.common.core.pojo.EllEyesightParticulars">
+        select * from ell_eyesight_particulars eep where eep.create_time =
+        (SELECT max(a.create_time) from ell_eyesight_particulars a where a.user_id = eep.user_id
+        GROUP BY a.user_id) and eep.user_id = #{userId}
+    </select>
+
+    <select id="selLastBmiTestById" resultType="com.eluolang.common.core.pojo.EllBmiParticulars">
+        select * from ell_bmi_particulars ebp where ebp.create_time =
+        (SELECT max(a.create_time) from ell_bmi_particulars a where a.user_id = ebp.user_id
+        GROUP BY a.user_id) and ebp.user_id = #{userId}
+    </select>
+
+    <select id="selUserTestResult" resultType="com.eluolang.module.report.vo.UserDailyResultVo">
+        select eu.id,eu.user_name,IFNULL(eep.left_vision,'/') as leftVision,IFNULL(eep.right_vision,'/') as rightVision,
+        IFNULL(eep.vision_comment,'/') as visionComment,IFNULL(ebp.bmi_comment,'/') as bmiComment
+        from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        LEFT JOIN ell_eyesight_particulars eep on eu.id = eep.user_id
+        LEFT JOIN ell_bmi_particulars ebp on eep.user_id = ebp.user_id
+        where IF((SELECT max(a.create_time) from ell_eyesight_particulars a where a.user_id = eep.user_id GROUP BY a.user_id) is null,0=0,
+        eep.create_time = (SELECT max(a.create_time) from ell_eyesight_particulars a where a.user_id = eep.user_id GROUP BY a.user_id))
+        and IF((SELECT max(b.create_time) from ell_bmi_particulars b where b.user_id = ebp.user_id GROUP BY b.user_id) is null ,
+        0=0 ,ebp.create_time = (SELECT max(b.create_time) from ell_bmi_particulars b where b.user_id = ebp.user_id GROUP BY b.user_id))
+        and eu.is_delete = 0 and pd.path like CONCAT((select path from pf_depart where id = #{deptId}) , '%')
+        <if test="optId != 1 and optId != 2">
+            and eu.org_id in (select rat from pf_operator_rat where opt_id = #{optId} and `module` = 2)
+        </if>
+        GROUP BY eu.id
+    </select>
+
+    <select id="selUserInfoByUserId" resultType="com.eluolang.module.report.vo.PersonalVisionReportVo">
+        SELECT eu.user_name,eu.user_sex,(SELECT dept_name from pf_depart where FIND_IN_SET(id,getParentList(eu.org_id))
+        and is_school = 1) as schoolName,pd.dept_name as className,fm.file_url from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        LEFT JOIN img_user_relevance iur on eu.id = iur.user_id
+        LEFT JOIN file_mgr fm on iur.file_img_id = fm.id
+        WHERE eu.id = #{userId}
+    </select>
+
+    <select id="selClassInfoByDeptId" resultType="com.eluolang.module.report.vo.PersonalVisionReportVo">
+        SELECT (SELECT dept_name from pf_depart where FIND_IN_SET(id,getParentList(pd.id))
+        and is_school = 1) as schoolName,pd.dept_name as className from pf_depart pd where pd.id = #{deptId}
+    </select>
+
+    <select id="selSchoolInfoByDeptId" resultType="com.eluolang.module.report.vo.PersonalVisionReportVo">
+        SELECT dept_name as schoolName from pf_depart where id = #{deptId}
+    </select>
+
+</mapper>

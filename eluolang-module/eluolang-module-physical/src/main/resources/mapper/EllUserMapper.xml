@@ -1,0 +1,791 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.EllUserMapper">
+    <insert id="createUser">
+        insert into ell_user(id, user_name, user_sex, org_id, is_delete, user_birth, student_id, id_card,
+                             home_address, create_by, create_time, en_time, phone, ethnic, en_grade, student_code,
+                             source_code)
+        values (#{ellUser.id}, #{ellUser.userName}, #{ellUser.userSex}, #{ellUser.orgId}, 0, #{ellUser.userBirth},
+                #{ellUser.studentId}, #{ellUser.idCard}, #{ellUser.homeAddress}, #{ellUser.createBy},
+                #{ellUser.createTime}, #{ellUser.enTime}, #{ellUser.phone}, #{ellUser.ethnic}, #{ellUser.enGrade},
+                #{ellUser.studentCode}, #{ellUser.sourceCode})
+    </insert>
+    <insert id="importUser">
+        insert into ell_user(id, user_name, user_sex, org_id, is_delete, user_birth, student_id, id_card,
+        home_address, create_by, create_time, en_time, phone, ethnic, en_grade, student_code)
+        values
+        <foreach collection="ellUserVo" item="ellUser" index="index" separator=",">(#{ellUser.id}, #{ellUser.userName},
+            #{ellUser.userSex}, #{ellUser.orgId}, 0, #{ellUser.userBirth},
+            #{ellUser.studentId}, #{ellUser.idCard}, #{ellUser.homeAddress}, #{ellUser.createBy},
+            #{ellUser.createTime}, #{ellUser.enTime}, #{ellUser.phone}, #{ellUser.ethnic}, #{ellUser.enGrade},
+            #{ellUser.studentCode})
+        </foreach>
+    </insert>
+    <insert id="createImageFace">
+        insert into img_user_relevance(user_id, file_img_id, face_info, ell_face, megvii_image_id)
+        values (#{userId}, #{imageId}, #{faceInfo}, #{ellFace}, #{KsImageId})
+    </insert>
+    <insert id="uploadImage">
+        insert into file_mgr(id, upload_time, file_url, type, size, file_name)
+        values (#{id}, #{uploadTime}, #{fileUrl}, #{type}, #{size}, #{fileName})
+    </insert>
+    <update id="updateUser">
+        UPDATE ell_user set is_delete=0
+        <if test="updateUserVo.userName!=null and updateUserVo.userName!=''">
+            , user_name=#{updateUserVo.userName}
+        </if>
+        <if test="updateUserVo.studentId!=null">
+            ,student_id=#{updateUserVo.studentId}
+        </if>
+        <if test="updateUserVo.studentCode!=null">
+            ,student_code=#{updateUserVo.studentCode}
+        </if>
+        <if test="updateUserVo.orgId!=null and updateUserVo.orgId!=''">
+            , org_id=#{updateUserVo.orgId}
+        </if>
+        <if test="updateUserVo.homeAddress!=null and updateUserVo.homeAddress!=''">
+            , home_address=#{updateUserVo.homeAddress}
+        </if>
+        <if test="updateUserVo.phone!=null and updateUserVo.phone!=''">
+            , phone=#{updateUserVo.phone}
+        </if>
+        <if test="updateUserVo.userBirth!=null and updateUserVo.userBirth!=''">
+            , user_birth=#{updateUserVo.userBirth}
+        </if>
+        <if test="updateUserVo.ethnic!=null and updateUserVo.ethnic!=''">
+            ,ethnic=#{updateUserVo.ethnic}
+        </if>
+        <if test="updateUserVo.enGrade !=null and updateUserVo.enGrade != ''">
+            ,en_grade= #{updateUserVo.enGrade}
+        </if>
+        <if test="updateUserVo.enTime !=null and updateUserVo.enTime != ''">
+            ,en_time= #{updateUserVo.enTime}
+        </if>
+        <if test="updateUserVo.isAuthentication !=null and updateUserVo.isAuthentication != ''">
+            ,is_authentication= 1
+        </if>
+        <if test="updateUserVo.sourceCode !=null and updateUserVo.sourceCode != ''">
+            ,source_code= #{updateUserVo.sourceCode}
+        </if>
+        <if test="updateUserVo.appHeight !=null and updateUserVo.appHeight != ''">
+            ,app_height= #{updateUserVo.appHeight}
+        </if>
+        <if test="updateUserVo.appWeight !=null and updateUserVo.appWeight != ''">
+            ,app_weight= #{updateUserVo.appWeight}
+        </if>
+        where id=#{updateUserVo.id} and is_delete=0
+    </update>
+    <update id="deleteUser">
+        update ell_user
+        set is_delete=1
+        where id = #{id}
+          and is_delete = 0
+    </update>
+    <update id="updateImageFace">
+        update img_user_relevance
+        set file_img_id = #{imageId},
+        face_info = #{faceInfo},
+        ell_face = #{ellFace}
+        <if test="ksImageId !=null and ksImageId!=''">
+            ,megvii_image_id=#{ksImageId}
+        </if>
+        where user_id = #{userId}
+    </update>
+    <select id="findUsers" resultType="com.eluolang.common.core.pojo.EllUser">
+        select * from ell_user where is_delete=0
+        <if test="orgId!=null and orgId!=''">
+            and org_id=#{orgId}
+        </if>
+        <if test="id!=null and id!=''">
+            and id=#{id}
+        </if>
+        <if test="studentId!=null and studentId!=''">
+            and student_id=#{studentId}
+        </if>
+        <if test="ethnic!=null and ethnic!=''">
+            and ethnic=#{ethnic}
+        </if>
+        <if test="name!=null and name!=''">
+            and user_name=#{name}
+        </if>
+    </select>
+    <select id="findUser" resultType="com.eluolang.physical.model.UserInfoVo">
+        select
+        a.id,
+        a.user_name,
+        a.user_sex,
+        a.user_birth,
+        a.student_id,
+        a.home_address,
+        a.en_time,
+        a.phone,
+        c.name,
+        a.wx_open_id as isWxReg,
+        b.dept_name,
+        a.org_id,
+        a.is_authentication,
+        e.file_url,
+        a.student_code,
+        a.en_grade,
+        a.id_card
+        from ell_user a
+        left join pf_depart b on b.id=a.org_id
+        left join sys_data_dictionary c on c.id=a.ethnic
+        left join img_user_relevance d on d.user_id=a.id
+        left join file_mgr e on e.id=d.file_img_id
+        where a.is_delete=0
+        <if test="orgId!=null and orgId!=''">
+            and org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{orgId}), '%'))
+        </if>
+        <if test="isRegister==1">
+            and a.wx_open_id is not null and a.wx_open_id != ''
+        </if>
+        <if test="isRegister==2">
+            and a.wx_open_id is null
+        </if>
+        <if test="isRegister==3">
+            and a.is_authentication=1
+        </if>
+        <if test="isRegister==4">
+            and a.is_authentication is null
+            or a.is_authentication = ''
+        </if>
+        <if test="id!=null and id!=''">
+            and a.id=#{id}
+        </if>
+        <if test="studentId!=null and studentId!=''">
+            and a.student_id=#{studentId}
+        </if>
+        <if test="ethnic!=null and ethnic!=''">
+            and a.ethnic=#{ethnic}
+        </if>
+        <if test="name!=null and name!=''">
+            and a.user_name like CONCAT('%',#{name},'%')
+        </if>
+        <if test="accountOrgId != 1 and accountOrgId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{accountOrgId} and `module` = 2)
+        </if>
+    </select>
+    <select id="findNoRegisterNum" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user
+        where is_delete = 0
+          and (wx_open_id = ''
+            or wx_open_id is null)
+          and org_id in (select id
+                         from pf_depart
+                         where path like CONCAT((select path
+                                                 from pf_depart
+                                                 where id =
+                                                       #{orgId}), '%'))
+
+    </select>
+    <select id="findDepart" resultType="com.eluolang.physical.model.DepartVo">
+        select id,
+               dept_name,
+               parent_id
+        from pf_depart b
+        where path like CONCAT((select path from pf_depart where id = #{orgId}), '%')
+    </select>
+    <!--    测试使用 作用遇上面一致
+    <select id="findDepart" resultType="com.eluolang.physical.service.impl.DepartVo">
+            select b.id,
+                   b.dept_name,
+                   a.user_name,
+                   b.parent_id
+            from pf_depart b
+                     left join ell_user a on a.org_id = b.id
+            where b.path like CONCAT((select path from pf_depart where id = #{orgId}), '%')
+        </select>-->
+    <select id="findEthnic" resultType="com.eluolang.common.core.pojo.Ethnic">
+        select id, name
+        from sys_data_dictionary
+        where type = 1
+    </select>
+    <select id="findByNameEthnic" resultType="com.eluolang.common.core.pojo.Ethnic">
+        select id, name
+        from sys_data_dictionary
+        where type = 1
+          and name = #{name}
+    </select>
+    <select id="findUserFaceInfo" resultType="java.lang.Integer">
+        select count(*)
+        from img_user_relevance
+        where user_id = #{usrId};
+    </select>
+    <select id="findNotAuthenticated" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user
+        where is_delete = 0 and org_id in (select id
+                                           from pf_depart
+                                           where path like
+                                                 CONCAT((select path from pf_depart where id = #{orgId})
+                                                     , '%'))
+            and is_authentication is null
+           or is_authentication = ''
+
+    </select>
+    <insert id="insertExamineeGroup">
+        insert into ell_examinee_group (id, group_name, plan_id, opt_id)
+        values (#{id}, #{groupName}, #{planId}, #{optId})
+    </insert>
+    <insert id="insertExamineeUser">
+        insert into ell_examinee_user (id,group_id,stu_id,test_number) values
+        <foreach collection="ellExamineeUserList" item="item" index="index" separator=",">
+            (#{item.id},#{item.groupId},#{item.stuId},#{item.testNumber})
+        </foreach>
+    </insert>
+    <insert id="addIdentification">
+        insert into ell_user_identification(user_id, identification, org_id)
+        values (#{userId}, #{identification}, #{orgId})
+    </insert>
+    <select id="selEllUserByDeptId" resultType="com.eluolang.common.core.pojo.EllUser">
+        select * from ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id where
+        pd.path like CONCAT((select path from pf_depart where id =
+        <foreach collection="pfDepartList" item="item" index="index" separator=",">
+            #{item.id}
+        </foreach>
+        ), '%') and eu.is_delete = 0
+    </select>
+    <select id="findUserById" resultType="com.eluolang.physical.model.EllReturnScoreVo">
+        select a.id,
+               a.user_name,
+               a.user_sex,
+               a.user_birth,
+               a.student_id,
+               a.home_address,
+               a.en_time,
+               a.en_grade,
+               a.phone,
+               a.wx_open_id,
+               a.org_id,
+               a.ethnic,
+               a.student_code,
+               a.is_authentication,
+               b.dept_name,
+               a.en_time,
+               a.en_grade
+        from ell_user a
+                 left join pf_depart b on b.id = a.org_id
+        where a.is_delete = 0
+          and a.id = #{id}
+    </select>
+    <select id="findUserByIdCard" resultType="com.eluolang.physical.model.EllReturnScoreVo">
+        select id,
+               user_name,
+               user_sex,
+               user_birth,
+               student_id,
+               home_address,
+               en_time,
+               en_grade,
+               phone,
+               wx_open_id,
+               org_id,
+               is_authentication
+        from ell_user
+        where is_delete = 0
+          and id_card = #{idCard}
+    </select>
+    <select id="findDeptNameById" resultType="java.lang.String">
+        select dept_name
+        from pf_depart
+        where id = #{orgId}
+    </select>
+    <select id="findIdentification" resultType="java.lang.String">
+        select user_id
+        from ell_user_identification
+        where identification = #{identification}
+    </select>
+
+    <select id="selectExamineeGroupAll" resultType="com.eluolang.common.core.pojo.EllExamineeGroup">
+        select *
+        from ell_examinee_group
+        where plan_id = #{planId}
+    </select>
+
+    <select id="findIdCardById" resultType="java.lang.String">
+        select id_card
+        from ell_user
+        where is_delete = 0
+          and id = #{id}
+    </select>
+
+    <select id="selExamineeGroupByPlanId" resultType="java.lang.Integer">
+        select count(*)
+        from ell_examinee_group
+        where plan_id = #{planId}
+    </select>
+
+    <select id="selectExaminee" resultType="com.eluolang.physical.model.EllExamineeVo">
+        select *
+        from ell_examinee_user eeu
+        LEFT JOIN ell_user eu on eu.id=eeu.stu_id
+        LEFT JOIN ell_examinee_group eeg on eeu.group_id = eeg.id
+        <where>
+            <if test="groupId != null and groupId != ''">
+                and eeg.id = #{groupId}
+            </if>
+            <if test="planId != null and planId != ''">
+                and eeg.plan_id = #{planId}
+            </if>
+        </where>
+    </select>
+
+    <delete id="deleteExamineeByPlanId">
+        delete
+        eeg,eeu from ell_examinee_group eeg INNER JOIN ell_examinee_user eeu on eeg.id = eeu.group_id
+        where eeg.plan_id =
+        #{planId}
+    </delete>
+    <delete id="deleteIdentification">
+        delete
+        from ell_user_identification
+        where user_id =
+              #{userId}
+    </delete>
+    <delete id="deleteSymetrical">
+        delete
+        from ell_symmetrical_encryption
+        where user_id =
+              #{userId}
+    </delete>
+    <delete id="delImageFaceMany">
+        delete
+        from img_user_relevance
+        where user_id in (
+        <foreach collection="ellFaceVoList" separator="," item="faceUser">
+            #{faceUser.userId}
+        </foreach>
+        )
+    </delete>
+
+
+    <update id="updatePfDepartStatus">
+        update pf_depart set is_delete = 1 where id in (
+        <foreach collection="deptIdList" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+        )
+    </update>
+
+    <update id="updateUserStatusList">
+        update ell_user set is_delete = 1 where id in (
+        <foreach collection="userIdList" item="item" index="index" separator=",">
+            #{item.id}
+        </foreach>
+        )
+    </update>
+
+    <select id="selUserByDeptIdList" resultType="com.eluolang.common.core.pojo.EllUser">
+        select * from ell_user eu left join pf_depart pd on eu.org_id = pd.id
+        where pd.id in (
+        <foreach collection="idList" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+        ) and eu.is_delete=0
+    </select>
+
+    <insert id="insertRetestGroup">
+        insert into ell_retest_group (id, plan_id, user_id) values
+        <foreach collection="ellRetestGroupList" item="item" index="index" separator=",">
+            (#{item.id},#{item.planId},#{item.userId})
+        </foreach>
+    </insert>
+    <insert id="createSymmetry">
+        insert into ell_symmetrical_encryption (user_id, id_card_symmetry) values
+        <foreach collection="ellSymmetryList" item="item" index="index" separator=",">
+            (#{item.userId},#{item.idCardSymmetry})
+        </foreach>
+    </insert>
+    <insert id="addBatchIdentification">
+        insert into ell_user_identification (user_id,identification,org_id) values
+        <foreach collection="identificationList" item="identifications" index="index" separator=",">
+            (#{identifications.userId},#{identifications.identification},#{identifications.orgId})
+        </foreach>
+    </insert>
+    <insert id="uploadImageMany">
+        insert into file_mgr(id, upload_time, file_url, type, size, file_name)
+        values
+        <foreach collection="fileMgrList" index="index" item="fileMgr" separator=",">
+            (#{fileMgr.id}, #{fileMgr.uploadTime}, #{fileMgr.fileUrl},
+            #{fileMgr.type}, #{fileMgr.size}, #{fileMgr.fileName})
+        </foreach>
+
+    </insert>
+    <insert id="createImageFaceMany">
+        insert into img_user_relevance(user_id, file_img_id, face_info,ell_face)
+        values
+        <foreach collection="ellFaceVoList" item="face" separator=",">
+            (#{face.userId}, #{face.imageId}, #{face.faceInfo},#{face.ellFace})
+        </foreach>
+    </insert>
+    <insert id="insertBacthExamineeGroup">
+        insert into ell_examinee_group(id,group_name,plan_id,opt_id) values
+        <foreach collection="ellExamineeGroup" item="group" separator=",">
+            (#{group.id},#{group.groupName},#{group.planId},#{group.optId})
+        </foreach>
+    </insert>
+    <select id="findUserBy" resultType="com.eluolang.physical.model.EllReturnScoreVo">
+        select a.id,
+        a.user_name,
+        a.user_sex,
+        a.user_birth,
+        a.student_id,
+        a.home_address,
+        a.en_time,
+        a.en_grade,
+        a.phone,
+        a.wx_open_id,
+        a.org_id,
+        a.is_authentication,
+        b.face_info,
+        c.file_url,
+        a.student_code
+        from ell_user a
+        left join img_user_relevance b on a.id=b.user_id
+        left join file_mgr c on b.file_img_id=c.id
+        where a.is_delete = 0
+        and (a.id = #{identification} or a.student_id = #{identification} or a.student_code=#{identification})
+        <if test="orgId!=0">and a.org_id = #{orgId}</if>
+        group by a.id
+    </select>
+    <select id="findStudentCode" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user
+        where student_code = #{studentCode}
+          and is_delete = 0
+    </select>
+    <select id="findIsRetestGroupUser" resultType="java.lang.Integer">
+        select count(*)
+        from ell_retest_group
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+    <select id="findOrgUserSize" resultType="java.lang.Integer">
+        select count(*) from ell_user
+        <where>
+            is_delete=0
+            <if test="accountOrgId != 1 and accountOrgId != 2">
+                and org_id in (select rat from pf_operator_rat where opt_id = #{accountOrgId} and `module` = 2)
+            </if>
+            <if test="orgId!=null and orgId=!''">
+                and org_id in (select id
+                from pf_depart
+                where path like
+                CONCAT((select path from pf_depart where id = #{orgId})
+                , '%'))
+            </if>
+        </where>
+    </select>
+    <select id="findFeature" resultType="com.eluolang.physical.model.EllFeature">
+        select *
+        from img_user_relevance a
+                 left join ell_use_plan_department b on plan_id = #{planId}
+                 left join ell_user c on c.org_id = b.org_id and c.is_delete = 0
+        where a.user_id = c.id
+    </select>
+    <select id="findOrgName" resultType="java.lang.String">
+        SELECT dept_name
+        FROM pf_depart
+        where
+        <if test="orgType==1">
+            is_school=1
+        </if>
+        <if test="orgType==0">
+            last_level=1
+        </if>
+        and ((select path from pf_depart where id = #{orgId}) LIKE concat('%'
+        , path
+        , '%'))
+    </select>
+    <select id="findUserImage" resultType="java.lang.String">
+        select b.file_url
+        from img_user_relevance a
+                 left join file_mgr b
+                           on a.file_img_id = b.id
+        where user_id = #{userId}
+    </select>
+    <select id="findImageUrl" resultType="java.lang.String">
+        select a.file_url
+        from file_mgr a
+                 left join img_user_relevance b on b.user_id = #{userId}
+        where b.file_image_id = a.id
+
+    </select>
+    <select id="hasDepartment" resultType="java.lang.Integer">
+        select count(*)
+        from pf_depart
+    </select>
+    <select id="hasTestProject" resultType="java.lang.Integer">
+        select count(*)
+        from plan_project_chance ppc
+                 LEFT JOIN ell_user eu on eu.id = #{findAvoidVo.userId} and eu.is_delete = 0
+                 LEFT JOIN ell_use_plan_department eupd
+                           on eupd.org_id = eu.org_id and eupd.plan_id = #{findAvoidVo.planId}
+                 LEFT JOIN ell_plan ep on ep.id = #{findAvoidVo.planId}
+                 LEFT JOIN ell_plan_user epu on epu.user_id = eu.id and epu.plan_id = ep.id
+        where ppc.plan_id = eupd.plan_id
+          and ep.is_delete = 0
+          and ppc.pro_id = #{findAvoidVo.proId}
+          and ppc.use_sex like CONCAT('%', eu.user_sex, '%')
+          and (ep.is_subscribe!=1 	or	epu.state=1)
+          and (ppc.essential = 1 or ppc.pro_id = (select optional_pro_id
+                                                  from ell_plan_pro_optional_item
+                                                  where plan_id = eupd.plan_id
+                                                    and user_id = eu.id
+                                                    and optional_pro_id = #{findAvoidVo.proId})
+            )
+    </select>
+    <!-- 查询运动指南规则 -->
+    <resultMap id="sportConfigResultMap" type="com.eluolang.physical.model.SportConfigVO">
+        <result column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="proIds" property="proIds"/>
+        <collection property="ruleList" ofType="com.eluolang.physical.model.SportConfigVO$RuleVO"
+                    select="querySportConfigRule" column="{id=id}"/>
+    </resultMap>
+
+
+    <!-- 查询个人体质测试报告运动指南 -->
+    <select id="querySportConfig" resultMap="sportConfigResultMap">
+        SELECT a.`id`,
+               a.`name`,
+               a.`pro_ids` proIds
+        FROM ell_sport_config a
+        WHERE a.`name` IN ('身体形态', '耐力', '心肺功能', '柔韧度', '上下肢力量')
+          AND a.is_delete = 0
+    </select>
+    <!-- 查询晕运动指南建议 -->
+    <select id="querySportConfigRule" resultType="com.eluolang.physical.model.SportConfigVO$RuleVO">
+        SELECT a.sex,
+               a.`comment`,
+               a.guide,
+               a.pro_id                proId,
+               b.pro_name_abbreviation proKey
+        FROM ell_sport_config_rule a
+                 LEFT JOIN ell_test_project b on a.pro_id = b.id
+        WHERE a.is_delete = 0
+          and a.sport_config_id = #{id}
+    </select>
+    <select id="selSchoolName" resultType="java.lang.String">
+        select dept_name
+        from pf_depart
+        where (SELECT path FROM pf_depart WHERE id = #{orgId}) like CONCAT(path, '%')
+          and is_school = 1
+    </select>
+    <select id="findOrgUsers" resultType="com.eluolang.physical.model.UserInfoVo">
+        select
+        a.id,
+        a.user_name,
+        a.user_sex,
+        a.user_birth,
+        a.student_id,
+        a.home_address,
+        a.en_time,
+        a.phone,
+        c.name,
+        a.wx_open_id as isWxReg,
+        b.dept_name,
+        a.org_id,
+        a.is_authentication,
+        e.file_url,
+        a.student_code,
+        a.en_grade
+        from ell_user a
+        left join pf_depart b on b.id=a.org_id
+        left join sys_data_dictionary c on c.id=a.ethnic
+        left join img_user_relevance d on d.user_id=a.id
+        left join file_mgr e on e.id=d.file_img_id
+        where a.is_delete=0
+        <if test="findEllUserVo.orgId!=null and findEllUserVo.orgId!=''">
+            and org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findEllUserVo.orgId}), '%') and last_level=1)
+        </if>
+        <if test="findEllUserVo.isRegister==1">
+            and a.wx_open_id is not null and a.wx_open_id != ''
+        </if>
+        <if test="findEllUserVo.isRegister==2">
+            and a.wx_open_id is null
+        </if>
+        <if test="findEllUserVo.isRegister==3">
+            and a.is_authentication=1
+        </if>
+        <if test="findEllUserVo.isRegister==4">
+            and a.is_authentication is null
+            or a.is_authentication = ''
+        </if>
+        <if test="findEllUserVo.id!=null and findEllUserVo.id!=''">
+            and a.id=#{findEllUserVo.id}
+        </if>
+        <if test="findEllUserVo.studentId!=null and findEllUserVo.studentId!=''">
+            and a.student_id=#{findEllUserVo.studentId}
+        </if>
+        <if test="findEllUserVo.ethnic!=null and findEllUserVo.ethnic!=''">
+            and a.ethnic=#{findEllUserVo.ethnic}
+        </if>
+        <if test="findEllUserVo.name!=null and findEllUserVo.name!=''">
+            and a.user_name like CONCAT('%',#{findEllUserVo.name},'%')
+        </if>
+        <if test="findEllUserVo.accountOrgId != 1 and findEllUserVo.accountOrgId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{findEllUserVo.accountOrgId} and `module` =
+            2)
+        </if>
+        limit #{findEllUserVo.page},15
+    </select>
+    <select id="findOrgUsersNum" resultType="java.lang.Integer">
+        select
+        count(a.id)
+        from ell_user a
+        left join pf_depart b on b.id=a.org_id
+        left join sys_data_dictionary c on c.id=a.ethnic
+        where a.is_delete=0
+        <if test="findEllUserVo.orgId!=null and findEllUserVo.orgId!=''">
+            and org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findEllUserVo.orgId}), '%') and last_level=1)
+        </if>
+        <if test="findEllUserVo.isRegister==1">
+            and a.wx_open_id is not null and a.wx_open_id != ''
+        </if>
+        <if test="findEllUserVo.isRegister==2">
+            and a.wx_open_id is null
+        </if>
+        <if test="findEllUserVo.isRegister==3">
+            and a.is_authentication=1
+        </if>
+        <if test="findEllUserVo.isRegister==4">
+            and a.is_authentication is null
+            or a.is_authentication = ''
+        </if>
+        <if test="findEllUserVo.id!=null and findEllUserVo.id!=''">
+            and a.id=#{findEllUserVo.id}
+        </if>
+        <if test="findEllUserVo.studentId!=null and findEllUserVo.studentId!=''">
+            and a.student_id=#{findEllUserVo.studentId}
+        </if>
+        <if test="findEllUserVo.ethnic!=null and findEllUserVo.ethnic!=''">
+            and a.ethnic=#{findEllUserVo.ethnic}
+        </if>
+        <if test="findEllUserVo.name!=null and findEllUserVo.name!=''">
+            and a.user_name like CONCAT('%',#{findEllUserVo.name},'%')
+        </if>
+        <if test="findEllUserVo.accountOrgId != 1 and findEllUserVo.accountOrgId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{findEllUserVo.accountOrgId} and `module` =
+            2)
+        </if>
+    </select>
+    <select id="selPlanUsers" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where org_id in (select org_id from ell_use_plan_department where plan_id = #{planId})
+    </select>
+    <select id="selPlanSchool" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select * from pf_depart where
+        <if test="type==1">
+            path like concat((select path from pf_depart where id=#{classOrgId}),'%')
+            and last_level=1
+        </if>
+        <if test="type==2">
+            (select path from pf_depart where id=#{classOrgId}) like concat(path,'%') and is_school=1
+        </if>
+        <if test="type==3">
+            path like concat((select path from pf_depart where id=#{classOrgId}),'%') and is_school=1
+        </if>
+        <if test="type==4">
+            parent_id=#{classOrgId}
+        </if>
+        <if test="planId!=null and planId!='' and type!=2">
+            and id in(select org_id from ell_use_plan_department where plan_id=#{planId})
+        </if>
+    </select>
+    <select id="selUsePlanDep" resultType="com.eluolang.common.core.pojo.EllUserPlanDepartment">
+        select *
+        from ell_use_plan_department
+        where plan_id = #{planId}
+          and is_this = 1
+    </select>
+    <select id="selPlanSchoolUser" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where org_id in (select id
+                         from pf_depart
+                         where path like concat((select path from pf_depart where id = #{orgId}), '%')
+                           and last_level = 1)
+          and org_id in (select org_id from ell_use_plan_department where plan_id = #{planId})
+          and is_delete = 0
+    </select>
+    <select id="selOptionalUserPro" resultType="com.eluolang.physical.model.EllOptionalUserProVo">
+        select eu.id                                                                  as userId,
+               eu.user_name,
+               GROUP_CONCAT(eppoi.optional_pro_id ORDER BY eppoi.optional_pro_id asc) as proId,
+               eu.user_sex
+        from ell_user eu
+                 left join ell_plan_pro_optional_item eppoi on eppoi.user_id = eu.id
+        where eu.org_id in (select id
+                            from pf_depart
+                            where path like concat((select path from pf_depart where id = #{orgId}), '%')
+                              and last_level = 1)
+          and eu.org_id in (select org_id from ell_use_plan_department where plan_id = #{planId})
+          and eu.is_delete = 0
+        GROUP BY eu.id
+    </select>
+    <select id="selTestNumber" resultType="java.lang.String">
+        select test_number
+        from ell_examinee_group eeg
+                 left join ell_examinee_user eeu on eeu.group_id = eeg.id
+        where eeu.stu_id = #{userId}
+          and eeg.plan_id = #{planId}
+    </select>
+    <select id="selGroupUser" resultType="com.eluolang.common.core.pojo.EllExamineeUser">
+        select *
+        from ell_examinee_user
+        where group_id = #{groupId}
+    </select>
+    <select id="selUserById" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where id = #{userId}
+    </select>
+    <select id="selSexUser" resultType="com.eluolang.physical.dto.EllSexNumDto">
+        select count(id) as num,user_sex
+        from ell_user a
+        where is_delete=0
+        <if test="findEllUserVo.orgId!=null and findEllUserVo.orgId!=''">
+            and org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findEllUserVo.orgId}), '%') and last_level=1)
+        </if>
+        <if test="findEllUserVo.isRegister==1">
+            and wx_open_id is not null and wx_open_id != ''
+        </if>
+        <if test="findEllUserVo.isRegister==2">
+            and wx_open_id is null
+        </if>
+        <if test="findEllUserVo.isRegister==3">
+            and is_authentication=1
+        </if>
+        <if test="findEllUserVo.isRegister==4">
+            and is_authentication is null
+            or is_authentication = ''
+        </if>
+        <if test="findEllUserVo.id!=null and findEllUserVo.id!=''">
+            and id=#{findEllUserVo.id}
+        </if>
+        <if test="findEllUserVo.studentId!=null and findEllUserVo.studentId!=''">
+            and student_id=#{findEllUserVo.studentId}
+        </if>
+        <if test="findEllUserVo.ethnic!=null and findEllUserVo.ethnic!=''">
+            and ethnic=#{findEllUserVo.ethnic}
+        </if>
+        <if test="findEllUserVo.name!=null and findEllUserVo.name!=''">
+            and user_name like CONCAT('%',#{findEllUserVo.name},'%')
+        </if>
+        <if test="findEllUserVo.accountOrgId != 1 and findEllUserVo.accountOrgId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{findEllUserVo.accountOrgId} and `module` =
+            2)
+        </if>
+        GROUP BY user_sex ORDER BY user_sex asc
+    </select>
+</mapper>

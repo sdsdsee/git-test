@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.module.report.mapper.ArchivesMapper">
+    <select id="selYearTestPersonNum" resultType="com.eluolang.module.report.vo.EllSelYearPersonNumVo">
+        SELECT IFNULL(count(DISTINCT eth.user_id),0)as num,IFNULL(YEAR(eth.create_time),YEAR(NOW())-#{dayNum}) as year
+        FROM ell_test_history eth
+        left join ell_user eu
+        on eu.is_delete = 0
+        <if test="orgId!=0">
+            and eu.org_id in(
+            select id from pf_depart where
+            path like concat((select path FROM pf_depart where id=#{orgId}),"%")
+            )
+        </if>
+        left join ell_plan ep on ep.is_delete = 0
+        <if test="isExam!=0">and ep.is_exam=#{isExam}</if>
+        WHERE year(eth.create_time)= year(NOW())-#{dayNum}
+        and eth.plan_id = ep.id
+        and eth.user_id=eu.id
+        <if test="accountId!=0 and accountId!=1">
+            and eu.org_id in (select rat from pf_operator_rat where opt_id =
+            #{accountId} and `module` = 2)
+        </if>
+    </select>
+    <select id="selYearNum" resultType="java.lang.Integer">
+        SELECT IFNULL(count(DISTINCT epes.user_id),0)
+        FROM ell_plan_end_score epes
+        LEFT JOIN ell_user eu on eu.is_delete = 0
+        <if test="orgId!=0">
+            and eu.org_id in(
+            select id from pf_depart where
+            path like concat((select path FROM pf_depart where id=#{orgId}),"%")
+            )
+        </if>
+        LEFT JOIN ell_plan ep on year(ep.create_time)=#{year}
+        <if test="isExam!=0">and ep.is_exam=#{isExam}</if>
+        WHERE
+        epes.user_id=eu.id
+        <if test="accountId!=0 and accountId!=1">
+            and eu.org_id in (SELECT rat FROM pf_operator_rat WHERE module =2
+            and opt_id=#{accountId})
+        </if>
+        AND (SELECT avg(end_score) FROM ell_plan_end_score ep WHERE user_id=eu.id )>=#{greater}
+        <if test="less>greater">
+            and #{less}>=(SELECT avg(end_score) FROM ell_plan_end_score ep WHERE user_id=eu.id )
+        </if>
+        and epes.plan_id=ep.id
+    </select>
+    <select id="findUser" resultType="com.eluolang.common.core.pojo.EllUser">
+        select id, user_name
+        from ell_user
+        where org_id = #{orgId}
+          and is_delete = 0
+    </select>
+    <select id="selYearAvgScore" resultType="com.eluolang.module.report.vo.EllYearAvgScoreVo">
+        SELECT IFNULL(AVG(epes.end_score),0) as avgScore,(year(NOW())-#{dayNum}) as year
+        FROM ell_plan_end_score epes
+        LEFT JOIN ell_user eu on eu.is_delete = 0
+        <if test="orgId!=0">
+            and eu.org_id in (
+            select id from pf_depart where
+            path like concat((select path FROM pf_depart where id=#{orgId}),"%")
+            )
+        </if>
+        LEFT JOIN ell_plan ep on year(ep.create_time)= year(NOW())-#{dayNum}
+        <if test="isExam!=0">and ep.is_exam=#{isExam}</if>
+        WHERE
+        epes.user_id=eu.id
+        <if test="accountId!=0 and accountId!=1">
+            and eu.org_id in (SELECT rat FROM pf_operator_rat WHERE module =2
+            and opt_id=#{accountId})
+        </if>
+        and epes.plan_id=ep.id
+    </select>
+    <select id="selUserYearData" resultType="com.eluolang.module.report.vo.EllUserYearProDateVo">
+        SELECT IFNULL(avg(eth.score), 0) as score, (year(NOW())-#{yearNum}) as 'year'
+        FROM ell_test_history eth
+        LEFT JOIN ell_plan ep
+        on year(ep.date_begin)= year(NOW())-#{yearNum}
+        <if test="isExam!=0">and ep.is_exam=#{isExam}</if>
+        LEFT JOIN ell_test_project etp on etp.id =#{proId}
+        WHERE eth.plan_id=ep.id and eth.test_project =etp.id and eth.user_id=#{userId}
+    </select>
+    <select id="selUserYearAvg" resultType="com.eluolang.module.report.vo.EllYearAvgScoreVo">
+        SELECT IFNULL(AVG(score), 0) as score,
+               (YEAR(NOW())-#{yearNum}) as 'year'
+        FROM ell_test_history eth
+                 LEFT JOIN ell_plan ep
+                           on (year(ep.date_begin)) = (year(NOW())) - #{yearNum} and ep.is_exam = 2
+        WHERE eth.plan_id = ep.id
+          and eth.user_id = #{userId}
+          and eth.score!='-'
+    </select>
+    <select id="selUserHeightAndWeight" resultType="com.eluolang.module.report.vo.EllHeightAndWeightVo">
+        select IFNULL(height, 0) as height, IFNULL(weight, 0) as weight, (YEAR(NOW())-#{yearNum}) as 'year'
+        FROM ell_bmi_particulars
+        WHERE (year(create_time)) = (year(NOW())-#{yearNum})
+          and create_time = (SELECT max(create_time) FROM ell_bmi_particulars WHERE user_id = #{userId})
+          and user_id = #{userId}
+          and is_last = 1
+    </select>
+</mapper>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.AvoidTestMapper">
+
+    <insert id="addAvoidApply">
+        insert into ell_avoid_test(id, user_id, plan_id, reason, state, is_delete, org_id, create_time, audit_time,
+                                   is_resubmit, submit_time, image_path)
+        values (#{avoidApply.id}, #{avoidApply.userId}, #{avoidApply.planId}, #{avoidApply.reason}, 1,
+                0, #{avoidApply.orgId}, #{avoidApply.createTime}, #{avoidApply.auditTime}, 0, #{avoidApply.submitTime},
+                #{avoidApply.imagePath})
+    </insert>
+    <insert id="addPlanEndScore">
+        insert into ell_plan_end_score(plan_id, user_id, end_score, end_comment)
+        values (#{planId}, #{userId}, #{endScore}, #{endComment})
+    </insert>
+    <insert id="addAvoidProject">
+        insert into ell_avoid_project(id,pro_id, pro_name, avoid_test_id)
+        values
+        <foreach collection="ellAvoidProjectList" item="ellAvoidProject" index="index" separator=",">
+            (#{ellAvoidProject.id},#{ellAvoidProject.proId}, #{ellAvoidProject.proName}, #{avoid})
+        </foreach>
+    </insert>
+    <update id="updateAvoidState">
+        update ell_avoid_test
+        set state=#{ellUpdateAvoid.state}
+        where id = #{ellUpdateAvoid.id}
+          and is_delete = 0
+    </update>
+    <update id="updataAvoid">
+        update ell_avoid_test
+        set state=#{avoidApply.state}
+        <if test="avoidApply.reason !=null and avoidApply.reason!=''">
+            ,reason=#{avoidApply.reason}
+        </if>
+        <if test="avoidApply.submitTime!=null and avoidApply.submitTime!=''">
+            ,submit_time=#{avoidApply.submitTime}
+        </if>
+        <if test="avoidApply.isResubmit!=null and avoidApply.isResubmit!=''">
+            ,is_resubmit=#{avoidApply.isResubmit}
+        </if>
+        <if test="avoidApply.orgId!=1 and avoidApply.orgId!=0">
+            ,is_resubmit=#{avoidApply.orgId}
+        </if>
+        <if test="avoidApply.imagePath!=null and avoidApply.imagePath!=''">
+            ,image_path=#{avoidApply.imagePath}
+        </if>
+        where id = #{avoidApply.id}
+        and is_delete = 0
+    </update>
+    <delete id="deleteAvoid">
+        delete
+        from ell_avoid_project
+        where avoid_test_id = #{avoId}
+    </delete>
+    <select id="findAvoidApply" resultType="com.eluolang.physical.model.AvoidApplyVo">
+        select * from ell_avoid_test where is_delete=0
+        <if test="findAvoidVo.id!=null and findAvoidVo.id!=''">
+            and id=#{findAvoidVo.id}
+        </if>
+        <if test="findAvoidVo.accountId != 1 and findAvoidVo.accountId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="findAvoidVo.orgId!=0 and findAvoidVo.orgId!=null">
+            and org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findAvoidVo.orgId}), '%'))
+        </if>
+        <if test="findAvoidVo.userId!=null and findAvoidVo.userId!=''">
+            and user_id=#{findAvoidVo.userId}
+        </if>
+        <if test="findAvoidVo.planId!=null and findAvoidVo.planId!=''">
+            and plan_id=#{findAvoidVo.planId}
+        </if>
+        <if test="findAvoidVo.userName!=null and findAvoidVo.userName!=''">
+            and user_id in (select id from ell_user where user_name like concat('%',#{findAvoidVo.userName},'%'))
+        </if>
+    </select>
+    <select id="findAvoidProject" resultType="com.eluolang.common.core.pojo.EllAvoidProject">
+        select *
+        from ell_avoid_project
+        where avoid_test_id = #{avoId}
+    </select>
+    <select id="isProTest" resultType="java.lang.Integer">
+        select count(*)
+        from ell_avoid_test a
+                 left join ell_avoid_project b on b.avoid_test_id = a.id and pro_id = #{findAvoidVo.proId}
+        where a.plan_id = #{findAvoidVo.planId}
+          and a.user_id = #{findAvoidVo.userId}
+          and a.state = 2
+    </select>
+    <select id="findPlanProject" resultType="com.eluolang.physical.model.EllPlanProjectVo">
+        select pro_id as id, pro_name
+        from plan_project_chance
+        where plan_id = #{planId}
+
+    </select>
+    <select id="findEllPlan" resultType="com.eluolang.common.core.pojo.EllPlan">
+        select date_end, date_begin, plan_title, plan_addr
+        from ell_plan
+        where id = #{planId}
+    </select>
+    <select id="selUserTestNum" resultType="java.lang.Integer">
+        select IFNULL(count(ppc.id), 0)
+        from plan_project_chance ppc
+                 left join ell_plan_pro_optional_item eppoi on eppoi.user_id = #{userId}
+        where ppc.plan_id = #{planId}
+          and (ppc.essential = 1 or (ppc.pro_id = eppoi.optional_pro_id and ppc.essential = 2))
+    </select>
+    <select id="findAvoidApplyProject" resultType="com.eluolang.common.core.pojo.EllAvoidProject">
+        select eat.* from ell_avoid_test eat
+        left join ell_avoid_project eap on eap.avoid_test_id=eat.id
+        where eat.is_delete=0
+        <if test="findAvoidVo.id!=null and findAvoidVo.id!=''">
+            and eat.id=#{findAvoidVo.id}
+        </if>
+        <if test="findAvoidVo.accountId != 1 and findAvoidVo.accountId != 0">
+            and eat.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="findAvoidVo.orgId!=0 and findAvoidVo.orgId!=null">
+            and eat.org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findAvoidVo.orgId}), '%'))
+        </if>
+        <if test="findAvoidVo.userId!=null and findAvoidVo.userId!=''">
+            and eat.user_id=#{findAvoidVo.userId}
+        </if>
+        <if test="findAvoidVo.planId!=null and findAvoidVo.planId!=''">
+            and eat.plan_id=#{findAvoidVo.planId}
+        </if>
+    </select>
+    <select id="selUser" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where id = #{userId}
+    </select>
+    <select id="selAvoid" resultType="com.eluolang.physical.dto.EllAvoidExportDto">
+        SELECT eat.id,eu.user_name, dept_name as className, eu.student_code, eu.student_id, eat.reason, eat.submit_time
+        as
+        `time`,eu.id as userId,eu.org_id,eat.state
+        from ell_avoid_test eat
+        left join ell_user eu on eu.id = eat.user_id
+        left join pf_depart pd on pd.id = eat.org_id
+        where eat.plan_id = #{findAvoidVo.planId} and eat.is_delete=0
+        <if test="findAvoidVo.id!=null and findAvoidVo.id!=''">
+            and eat.id=#{findAvoidVo.id}
+        </if>
+        <if test="findAvoidVo.accountId != 1 and findAvoidVo.accountId != 0">
+            and eat.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="findAvoidVo.orgId!=0 and findAvoidVo.orgId!=null">
+            and eat.org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findAvoidVo.orgId}), '%'))
+        </if>
+        <if test="findAvoidVo.userId!=null and findAvoidVo.userId!=''">
+            and eat.user_id=#{findAvoidVo.userId}
+        </if>
+        <if test="findAvoidVo.userName!=null and findAvoidVo.userName!=''">
+            and eat.user_id in (select id from ell_user where user_name like concat('%',#{findAvoidVo.userName},'%'))
+        </if>
+    </select>
+    <select id="selSchoolName" resultType="java.lang.String">
+        select dept_name
+        from pf_depart
+        where (select path from pf_depart where id = #{orgId}) like concat(path, '%')
+          and is_school = 1
+    </select>
+</mapper>

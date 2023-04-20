@@ -1,0 +1,386 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.device.mapper.DeviceMapper">
+
+    <!--查询设备是否注册-->
+    <select id="selDeviceRegister" resultType="java.lang.Integer">
+        select count(*)
+        from ell_smart_device_management
+        where device_id = #{deviceId}
+    </select>
+
+    <!--根据设备id查询日常锻炼计划详情-->
+    <select id="selExercisePlan" resultType="com.eluolang.common.core.pojo.EllDailyExercisePlan">
+        select edep.*
+        from ell_daily_exercise_plan edep
+                 LEFT JOIN ell_smart_device_management ed on edep.use_orgId = ed.dept_id
+        where ed.device_id = #{deviceId}
+    </select>
+
+    <!--添加设备-->
+    <insert id="insertDevice">
+        insert into ell_smart_device_management(id, device_id, device_name, device_ip, location_x, location_y,
+                                                action_time, close_time,
+                                                is_delete, location, create_time, create_by, device_type, rtsp, dept_id)
+        values (#{ellDevice.id}, #{ellDevice.deviceId}, #{ellDevice.devName}, #{ellDevice.deviceIp},
+                #{ellDevice.locationX}, #{ellDevice.locationY}, #{ellDevice.actionTime}, #{ellDevice.closeTime},
+                0, #{ellDevice.location}, #{ellDevice.createTime}, #{ellDevice.createBy}, #{ellDevice.deviceType},
+                #{ellDevice.rtsp}, #{ellDevice.deptId})
+    </insert>
+    <insert id="addBodyErrorScreenshot">
+        insert into ell_body_error_screenshot(id, pro_id, user_id, plan_id, error_traces, error_image_uri, is_retest)
+        values (#{id}, #{bodyErrorScreenshotDto.projectId},
+                #{bodyErrorScreenshotDto.userId}, #{bodyErrorScreenshotDto.planId},
+                #{bodyErrorScreenshotDto.errorTraces}, #{uri}, #{isRetest})
+    </insert>
+    <insert id="uploadImage">
+        insert into file_mgr(id, upload_time, file_url, type, size, file_name)
+        values (#{id}, #{uploadTime}, #{fileUrl}, #{type}, #{size}, #{fileName})
+    </insert>
+    <insert id="addGradeVideo">
+        insert into ell_grade_video(id, plan_id, user_id, project_id, file_id, begin_time, end_time,
+        is_retest,device_id,fps)
+        values
+        <foreach collection="ellGradeVideoVoList" separator="," index="index" item="ellGradeVideo">
+            (#{ellGradeVideo.id},
+            #{ellGradeVideo.planId}, #{ellGradeVideo.userIds}, #{ellGradeVideo.projectId},
+            #{ellGradeVideo.fileId}, #{ellGradeVideo.beginTime}, #{ellGradeVideo.endTime},
+            #{ellGradeVideo.isRetest},#{ellGradeVideo.deviceId},#{ellGradeVideo.fps})
+        </foreach>
+
+    </insert>
+    <insert id="addDeviceVersions">
+        insert into ell_device_versions(file_url, device_description, device_versions, parent_id)
+        values (#{versions.fileUrl}, #{versions.deviceDescription},
+                #{versions.deviceVersions}, #{versions.parentId})
+    </insert>
+    <!--根据设备id删除设备-->
+    <delete id="deleteDevice">
+        delete
+        from ell_smart_device_management
+        where device_id = #{deviceId}
+    </delete>
+    <delete id="delDeviceVersion">
+        delete
+        from ell_device_versions
+        where id = #{id}
+    </delete>
+    <delete id="delDeviceVersionLabel">
+        delete
+        from ell_device_versions_label
+        where id = #{id}
+    </delete>
+    <delete id="delAllVersionLabel">
+        delete
+        from ell_device_versions
+        where parent_id = #{parentId}
+    </delete>
+
+    <update id="updateDevice">
+        update ell_smart_device_management
+        set dept_id     = #{ellDevice.deptId},
+            device_name = #{ellDevice.devName},
+            device_id   = #{ellDevice.deviceId},
+            device_type=#{ellDevice.deviceType},
+            rtsp=#{ellDevice.rtsp}
+        where id = #{ellDevice.id}
+    </update>
+
+    <select id="selectDevice" resultType="com.eluolang.device.dto.EllDeviceInfodDto">
+        select *, device_name as devName from ell_smart_device_management
+        <where>
+            <if test="devName != null and devName != ''">
+                and device_name like concat('%',#{devName},'%')
+            </if>
+            <if test="deviceId != null and deviceId != ''">
+                and device_id like concat('%',#{deviceId},'%')
+            </if>
+            <if test="optId != 1 and optId != 2">
+                and dept_id in (select rat FROM pf_operator_rat where opt_id = #{optId} and `module` = 2)
+            </if>
+            <if test="deviceType != null">
+                and device_type=#{deviceType}
+            </if>
+        </where>
+    </select>
+
+    <select id="selPlanByDeviceId" resultType="com.eluolang.device.vo.EllPlanVo">
+        select ep.*, ep.is_resurvey as isRetest
+        from ell_plan ep
+                 LEFT JOIN ell_use_plan_department eupd on ep.id = eupd.plan_id
+                 LEFT JOIN pf_depart pd on eupd.org_id = pd.id
+        where pd.path like concat
+            ((select a.path
+              from pf_depart a
+                       LEFT JOIN ell_smart_device_management b on a.id = b.dept_id
+              where b.device_id = #{deviceId}), '%')
+          and ep.plan_state = 2
+          and ep.is_delete = 0
+        GROUP BY ep.id
+    </select>
+    <select id="selPlanById" resultType="com.eluolang.device.vo.EllPlanVo">
+        select *, is_resurvey as isRetest
+        from ell_plan
+        where id = #{planId}
+    </select>
+    <select id="selAllTestProject" resultType="com.eluolang.common.core.pojo.TestProject">
+        select *
+        from ell_test_project
+    </select>
+
+    <select id="selPlanDepartmentByPlanId" resultType="com.eluolang.common.core.pojo.EllUsePlanDepartment">
+        select eupd.*
+        from ell_use_plan_department eupd
+                 left join pf_depart pd on pd.last_level = 1
+        where eupd.plan_id = #{planId}
+          and pd.id = eupd.org_id
+    </select>
+
+    <select id="selTestRuleByIds" resultType="com.eluolang.common.core.pojo.EllTestRules">
+        select * from ell_test_rules where id in (
+        <foreach collection="departments" item="item" index="index" separator=",">
+            #{item.useRule}
+        </foreach>
+        )
+        OR parent_id in (
+        <foreach collection="departments" item="item" index="index" separator=",">
+            #{item.useRule}
+        </foreach>
+        )
+    </select>
+
+    <select id="selRuleScoreByParentId" resultType="com.eluolang.common.core.pojo.EllTestRulesScore">
+        select * from ell_test_rules_score where parent_id in (
+        <foreach collection="ellTestRules" item="item" index="index" separator=",">
+            #{item.id}
+        </foreach>
+        )
+    </select>
+    <!--  <select id="selEllUserByDeptId" resultType="com.eluolang.device.vo.EllUserVo">
+          select *,pd.dept_name as orgName from ell_user eu LEFT JOIN img_user_relevance iur on eu.id = iur.user_id
+          LEFT JOIN file_mgr fm on iur.file_img_id = fm.id
+          left join ell_symmetrical_encryption en on eu.id=en.user_id
+          LEFT JOIN pf_depart pd on eu.org_id = pd.id
+          where eu.org_id in (
+          <foreach collection="departmentList" item="item" index="index" separator=",">
+              #{item.orgId}
+          </foreach>
+          ) and eu.is_delete = 0
+      </select>-->
+    <select id="selEllUserByDeptId" resultType="com.eluolang.device.vo.EllUserVo">
+        select *,pd.dept_name as orgName from ell_user eu
+        LEFT JOIN img_user_relevance iur on eu.id = iur.user_id
+        LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        where eu.org_id in (
+        <foreach collection="departmentList" item="item" index="index" separator=",">
+            #{item.orgId}
+        </foreach>
+        ) and eu.is_delete = 0
+    </select>
+
+    <select id="selUserNumber" resultType="com.eluolang.device.vo.UserNumberVo">
+        select IFNULL(SUM(CASE when eu.user_sex is not NULL then eu.user_sex = 1 or eu.user_sex = 2 END),0) as
+        totalNumber,
+        IFNULL(SUM(CASE when eu.user_sex is not NULL then eu.user_sex = 1 END),0) as manNumber,
+        IFNULL(SUM(CASE when eu.user_sex is not NULL then eu.user_sex = 2 END),0) as womanNumber
+        from ell_user eu LEFT JOIN img_user_relevance iur on eu.id = iur.user_id
+        LEFT JOIN file_mgr fm on iur.file_img_id = fm.id
+        left join ell_symmetrical_encryption en on eu.id=en.user_id
+        LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        where eu.org_id in (
+        <foreach collection="departmentLists" item="item" index="index" separator=",">
+            #{item.orgId}
+        </foreach>
+        ) and eu.is_delete = 0
+    </select>
+
+    <select id="selProjectChanceById" resultType="com.eluolang.device.vo.EllPlanProjectChanceVo">
+        select *
+        from plan_project_chance
+        where plan_id = #{planId}
+    </select>
+    <select id="selTestHistoryByPlanId" resultType="java.lang.Integer">
+        select count(*)
+        from ell_test_history
+        where plan_id = #{planId}
+          and test_project = #{proId}
+    </select>
+
+    <select id="selSysDataDictionaryByType" resultType="com.eluolang.common.core.pojo.SysDataDictionary">
+        select *
+        from sys_data_dictionary
+        where `type` = #{type}
+    </select>
+    <select id="findIsHaveHistory" resultType="java.lang.Integer">
+        select count(*)
+        from ell_test_history
+        where plan_id = #{planId}
+          and test_project = #{proId}
+    </select>
+    <select id="selDeviceRtsp" resultType="java.lang.String">
+        select rtsp
+        from ell_smart_device_management
+        where device_id = #{deviceId}
+    </select>
+    <select id="selGradeVideo" resultType="java.lang.Integer">
+        select if(count(id) > 0, 2, 1)
+        from ell_grade_video
+        where plan_id = #{planId}
+          and user_id = #{userId}
+          and project_id = #{proId}
+    </select>
+    <select id="selIsExistsUserByPlan" resultType="java.lang.Integer">
+        select *
+        from ell_use_plan_department eupd
+                 LEFT JOIN ell_user eu on eupd.org_id = eu.org_id
+        where eupd.plan_id = #{planId}
+          and eu.student_code = #{studentCode}
+    </select>
+    <insert id="insertSignData">
+        insert into ell_sign(id, student_code, plan_id, sign_time, school_id)
+        values (#{id}, #{studentCode}, #{planId}, #{signTime}, #{schoolId})
+    </insert>
+    <insert id="addDeviceVersionsLabel">
+        insert into ell_device_versions_label(title, parent_id, label)
+        values (#{deviceVersions.title}, #{deviceVersions.parentId}, #{deviceVersions.label})
+    </insert>
+
+    <select id="selSchoolNameById" resultType="java.lang.String">
+        select dept_name
+        from pf_depart
+        where id = #{deptId}
+    </select>
+
+    <select id="selUserCountByDeptId" resultType="java.lang.Integer">
+        SELECT count(eu.id) FROM ell_use_plan_department eupd LEFT JOIN ell_user eu on eupd.org_id = eu.org_id
+        LEFT JOIN pf_depart pd on eupd.org_id = pd.id
+        WHERE eupd.plan_id = #{planId}
+        <if test="deptId != 0 and deptId != null">
+            and eu.is_delete = 0 and pd.path LIKE CONCAT((select path from pf_depart where id = #{deptId}),"%")
+        </if>
+    </select>
+
+    <select id="selSignCount" resultType="java.lang.Integer">
+        SELECT count(DISTINCT eu.id) FROM ell_sign es
+        LEFT JOIN pf_depart pd on es.school_id = pd.id
+        LEFT JOIN ell_user eu on es.student_code = eu.student_code
+        WHERE eu.is_delete = 0
+        <if test="deptId != 0 and deptId != null">
+            and pd.id = #{deptId}
+        </if>
+        and es.plan_id = #{planId}
+        <if test="date != null and date != ''">
+            and TO_DAYS(es.sign_time) = TO_DAYS(#{date})
+        </if>
+    </select>
+
+    <select id="selSignCountByPlanId" resultType="java.lang.Integer">
+        select count(DISTINCT student_code)
+        from ell_sign
+        where plan_id = #{planId}
+          and TO_DAYS(sign_time) = TO_DAYS(NOW())
+    </select>
+
+    <select id="selSignUserByCode" resultType="com.eluolang.device.vo.SignUserVo">
+        select eu.id,
+               eu.user_name,
+               eu.en_time,
+               eu.en_grade,
+               eu.org_id    as classId,
+               pd.dept_name as className,
+               eu.student_id,
+               fm.file_url
+        from ell_user eu
+                 LEFT JOIN pf_depart pd on eu.org_id = pd.id
+                 LEFT JOIN img_user_relevance iur on eu.id = iur.user_id
+                 LEFT JOIN file_mgr fm on iur.file_img_id = fm.id
+        where eu.student_code = #{studentCode}
+          and eu.is_delete = 0
+    </select>
+
+    <select id="selSchoolDataById" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select *
+        from pf_depart as a,
+             (select getParentList(#{deptId}) ids) as b
+        where FIND_IN_SET(id, ids)
+          and is_school = 1
+    </select>
+    <select id="exportSignUserData" resultType="com.eluolang.device.vo.SignExcelVo">
+        select eu.user_name,eu.en_time,eu.en_grade,pd.dept_name as className,pd.path as classPath,
+        eu.student_id,ep.plan_title as planName,es.sign_time
+        from ell_sign es LEFT JOIN ell_user eu on es.student_code = eu.student_code
+        LEFT JOIN ell_plan ep on es.plan_id = ep.id
+        LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        LEFT JOIN ell_use_plan_department eupd on pd.id = eupd.org_id
+        where eu.is_delete = 0 and es.plan_id = #{planId}
+        <if test="time != null and time != ''">
+            and TO_DAYS(es.sign_time) = TO_DAYS(#{time})
+        </if>
+        <if test="deptId != 0 and deptId != null">
+            and pd.path LIKE CONCAT((select path from pf_depart where id = #{deptId}),"%")
+        </if>
+        group by es.sign_time,es.student_code
+    </select>
+    <select id="selSchoolByPlanId" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select *
+        from ell_use_plan_department eupd
+                 LEFT JOIN pf_depart pd on eupd.org_id = pd.id
+        where eupd.plan_id = #{planId}
+          and pd.is_school = 1
+    </select>
+    <select id="selAllSignDataByPlanId" resultType="com.eluolang.device.vo.SignDataVo">
+        SELECT es.school_id as deptId, pd.dept_name as deptName, count(DISTINCT eu.id) as checkedNum
+        FROM ell_sign es
+                 LEFT JOIN ell_user eu on es.student_code = eu.student_code
+                 LEFT JOIN pf_depart pd on es.school_id = pd.id
+        WHERE eu.is_delete = 0
+          and es.plan_id = #{planId}
+          and TO_DAYS(es.sign_time) = TO_DAYS(NOW())
+        GROUP BY es.school_id
+    </select>
+    <select id="selPlanNum" resultType="java.lang.Integer">
+
+        SELECT IFNULL(COUNT(id), 0)
+        from ell_user
+        WHERE org_id IN (   <foreach collection="departmentLists" item="item" index="index" separator=",">
+        #{item.orgId}
+    </foreach>)
+        and is_delete = 0
+        <if test="sex!=0">
+            and user_sex=#{sex}
+        </if>
+    </select>
+    <select id="selDeviceVersionsLabel" resultType="com.eluolang.common.core.pojo.EllDeviceVersionsLabel">
+        select *
+        from ell_device_versions_label
+    </select>
+    <select id="selDeviceVersion" resultType="com.eluolang.common.core.pojo.EllDeviceVersions">
+        select *
+        from ell_device_versions
+        where parent_id = #{parentId}
+    </select>
+    <select id="selLabelId" resultType="java.lang.Integer">
+        select IF(id is null, 0, id)
+        from ell_device_versions_label
+        where label = #{label}
+    </select>
+    <select id="selVersionUrl" resultType="com.eluolang.common.core.pojo.EllDeviceVersions">
+        select *
+        from ell_device_versions
+        where parent_id = #{parentId}
+        order by device_versions desc
+    </select>
+    <select id="selSameVersion" resultType="com.eluolang.common.core.pojo.EllDeviceVersions">
+        select *
+        from ell_device_versions
+        where parent_id = #{parentId}
+          and device_versions = #{version}
+    </select>
+    <select id="selectDeviceById" resultType="com.eluolang.device.dto.EllDeviceInfoDto">
+        select pd.dept_name, ed.id, ed.device_name as devName, ed.rtsp, ed.device_id
+        from ell_smart_device_management ed
+                 left join pf_depart pd on pd.id = ed.dept_id
+        where ed.device_id = #{deviceId}
+    </select>
+
+</mapper>

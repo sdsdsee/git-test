@@ -1,0 +1,609 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.playground.mapper.WisdomClassMapper">
+    <insert id="addHisClass">
+        insert into ell_class_history(id, user_id, course_id, is_delete, create_by_device, teacher_id, create_time,
+        update_by, update_time, data, user_sex, grade, org_id, pro_id, pro_name,
+        is_retest, type,extra_data,check_in_timestamp,end_timestamp,time_spent)
+        values
+        <foreach collection="histories" item="his" index="index" separator=",">
+            (#{his.id},#{his.userId},#{his.courseId},0,#{his.createByDevice},#{his.teacherId},#{his.createTime},#{his.updateBy},
+            #{his.updateTime},#{his.data},#{his.userSex},#{his.grade},#{his.orgId},#{his.proId},#{his.proName},
+            #{his.isRetest},#{his.type},#{his.extraData},#{his.checkInTimestamp},#{his.endTimestamp},#{his.timeSpent})
+        </foreach>
+    </insert>
+    <insert id="addVideo">
+        insert into ell_class_video(id, user_id, video_path, course_id, pro_id, mode, create_time)
+        values
+        <foreach collection="classVideos" index="index" separator="," item="classVideo">
+            (#{classVideo.id}, #{classVideo.userId}, #{classVideo.videoPath},
+            #{classVideo.courseId},
+            #{classVideo.proId}, #{classVideo.mode}, #{classVideo.createTime})
+        </foreach>
+    </insert>
+    <insert id="addClassTime">
+        insert into ell_smart_class_time(id, class_num, time_start, time_end,
+        school_id, create_time, updata_time, create_by,time_stamp_start,time_stamp_end)
+        values
+        <foreach collection="classTimes" index="index" separator="," item="classTime">
+            (#{classTime.id},#{classTime.classNum},#{classTime.timeStart},#{classTime.timeEnd}
+            ,#{classTime.schoolId},#{classTime.createTime},#{classTime.updateTime}
+            ,#{classTime.createBy},#{classTime.timeStampStart},#{classTime.timeStampEnd})
+        </foreach>
+    </insert>
+    <insert id="addCourseware">
+        insert into ell_smart_courseware(id, courseware_name, teacher_id, create_time, file_url, type)
+        values (#{courseware.id}, #{courseware.coursewareName}, #{courseware.teacherId}, #{courseware.createTime},
+                #{courseware.fileUrl}, #{courseware.type})
+    </insert>
+    <insert id="addClassSchedule">
+        insert into ell_smart_class_schedule(id, class_name,teacher_id,class_time_id,concrete_start
+        ,concrete_stamp_start,concrete_end,concrete_stamp_end,school_id,class_id,create_time
+        ,updata_time,create_by,week,date_time,location,phone)
+        values
+        <foreach collection="classSchedules" index="index" separator="," item="classSchedule">
+            (#{classSchedule.id},#{classSchedule.className},#{classSchedule.teacherId},#{classSchedule.classTimeId}
+            ,#{classSchedule.concreteStart},#{classSchedule.concreteStampStart},#{classSchedule.concreteEnd}
+            ,#{classSchedule.concreteStampEnd},#{classSchedule.schoolId},#{classSchedule.classId},#{classSchedule.createTime},#{classSchedule.updateTime}
+            ,#{classSchedule.createBy},#{classSchedule.week},#{classSchedule.dateTime},#{classSchedule.location},#{classSchedule.phone})
+        </foreach>
+    </insert>
+    <insert id="delCourseById">
+        delete from ell_smart_class_schedule where id in(
+        <foreach collection="courseId" item="id" separator=",">
+            #{id}
+        </foreach>
+        )
+    </insert>
+    <insert id="addConstitutionRules">
+        insert into ell_constitution_rules(id, grade, school_id, rules_id)
+        values
+        <foreach collection="constitutionRules" item="rule" index="index" separator=",">
+            (
+            #{rule.id},#{rule.grade},#{rule.schoolId},#{rule.rulesId}
+            )
+        </foreach>
+    </insert>
+    <update id="updateCourseById">
+        update ell_smart_class_schedule
+        <set>
+            <if test="classSchedule.className != null and classSchedule.className != ''">
+                class_name = #{classSchedule.className},
+            </if>
+            <if test="classSchedule.teacherId != null and classSchedule.teacherId != ''">
+                teacher_id = #{classSchedule.teacherId},
+            </if>
+            <if test="classSchedule.classTimeId != null and classSchedule.classTimeId != ''">
+                class_time_id = #{classSchedule.classTimeId},
+            </if>
+            <if test="classSchedule.concreteStart != null and classSchedule.concreteStart != ''">
+                concrete_start = #{classSchedule.concreteStart},
+            </if>
+            <if test="classSchedule.concreteStampStart != null and classSchedule.concreteStampStart != ''">
+                concrete_stamp_start = #{classSchedule.concreteStampStart},
+            </if>
+            <if test="classSchedule.concreteEnd != null and classSchedule.concreteEnd != ''">
+                concrete_end = #{classSchedule.concreteEnd},
+            </if>
+            <if test="classSchedule.concreteStampEnd != null and classSchedule.concreteStampEnd != ''">
+                concrete_stamp_end = #{classSchedule.concreteStampEnd},
+            </if>
+            <if test="classSchedule.schoolId != null and classSchedule.schoolId != ''">
+                school_id = #{classSchedule.schoolId},
+            </if>
+            <if test="classSchedule.classId != null and classSchedule.classId != ''">
+                class_id = #{classSchedule.classId},
+            </if>
+            <if test="classSchedule.createTime != null and classSchedule.createTime != ''">
+                create_time = #{classSchedule.createTime},
+            </if>
+            <if test="classSchedule.updateTime != null and classSchedule.updateTime != ''">
+                updata_time = #{classSchedule.updateTime},
+            </if>
+            <if test="classSchedule.createBy != null and classSchedule.createBy != ''">
+                create_by = #{classSchedule.createBy},
+            </if>
+            <if test="classSchedule.week != null and classSchedule.week != ''">
+                week = #{classSchedule.week},
+            </if>
+            <if test="classSchedule.dateTime != null and classSchedule.dateTime != ''">
+                date_time = #{classSchedule.dateTime},
+            </if>
+            <if test="classSchedule.location != null and classSchedule.location != ''">
+                location = #{classSchedule.location},
+            </if>
+            <if test="classSchedule.phone != null and classSchedule.phone != ''">
+                phone = #{classSchedule.phone},
+            </if>
+        </set>
+        where id = #{classSchedule.id}
+    </update>
+    <delete id="delCourseware">
+        delete from ell_smart_courseware where id in(
+        <foreach collection="coursewareId" item="id" separator=",">
+            #{id}
+        </foreach>
+        )
+    </delete>
+    <delete id="delCourseByTime">
+        delete
+        from ell_smart_class_schedule
+        where teacher_id = #{accountId}
+        <if test="startTimeStamp!=null">and concrete_stamp_start >= #{startTimeStamp}</if>
+        <if test="endTimeStamp!=null">and #{endTimeStamp} >= concrete_stamp_end</if>
+    </delete>
+    <delete id="delClasTime">
+        delete
+        from ell_smart_class_time
+        where school_id = #{schoolId}
+    </delete>
+    <delete id="delConstitutionRules">
+        delete
+        from ell_constitution_rules
+        where school_id = #{schoolId}
+    </delete>
+    <select id="selHisClass" resultType="com.eluolang.playground.vo.EllSelClassHistory">
+        select ech.*,eu.user_name,eu.student_id,eu.student_code,etp.pro_unit as unit
+        from ell_class_history ech
+        left join ell_user eu on eu.id=ech.user_id
+        left join ell_test_project etp on etp.id=ech.pro_id
+        where ech.is_delete = 0
+        <if test="history.userId!=null and history.userId!=''">
+            and ech.user_id=#{history.userId}
+        </if>
+        <if test="history.courseId !=null and history.courseId !=''">
+            and ech.course_id =#{history.courseId}
+        </if>
+        <if test="history.proId!=0">
+            and ech.pro_id=#{history.proId}
+        </if>
+        <if test="history.type!=0">
+            and ech.type=#{history.type}
+        </if>
+        order by ech.create_time
+    </select>
+    <select id="selVideo" resultType="com.eluolang.common.core.pojo.EllClassVideo">
+        select *
+        from ell_class_video
+        where user_id = #{classVideo.userId}
+          and course_id = #{classVideo.courseId}
+    </select>
+    <select id="selClassTime" resultType="com.eluolang.common.core.pojo.EllSmartClassTime">
+        select *
+        from ell_smart_class_time
+        where school_id = #{schoolId}
+    </select>
+    <select id="selSchools" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select *
+        from pf_depart
+        where
+        is_school=1
+        <if test="type and accountId>1">
+            and id in (select rat from pf_operator_rat where opt_id=#{accountId} and module=2)
+        </if>
+        <if test="!type and accountId>1">
+            and (select path
+            from pf_depart
+            where id=(select rat from pf_operator_rat where opt_id=#{accountId} and module=2 limit 1)) like
+            concat(path,'%')
+        </if>
+    </select>
+    <select id="selCourse" resultType="com.eluolang.common.core.pojo.EllCourseware">
+        select *
+        from ell_smart_courseware
+        where teacher_id = #{accountId}
+        <if test="coursewareName!=null and coursewareName!=''">
+            and courseware_name like concat('%',#{coursewareName},'%')
+        </if>
+    </select>
+    <select id="selSchoolByClassId" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select *
+        from pf_depart
+        where is_school = 1
+          and (select path
+               from pf_depart
+               where id = #{classId}) like
+              concat(path
+                  , '%')
+    </select>
+    <select id="selSmartClassWeek" resultType="com.eluolang.playground.dto.EllSmartClassScheduleDto">
+        select escs.id,escs.class_name as name,escs.teacher_id,po.nickname as teacherName,escs.concrete_start
+        ,escs.concrete_stamp_start as beginAt,escs.concrete_end,escs.concrete_stamp_end as
+        endAt,escs.school_id,escs.class_id
+        ,escs.week,escs.date_time,pd.dept_name as className ,escs.location as address
+        ,esct.class_num as 'index'
+        from ell_smart_class_schedule escs
+        left join pf_depart pd on pd.id=escs.class_id
+        left join ell_smart_class_time esct on esct.id=escs.class_time_id
+        left join pf_operator po on
+        1=1
+        <if test="accountId!=0 and accountId!=1">
+            and po.path like concat((SELECT path FROM pf_operator WHERE id=#{accountId}
+            ),'%')
+        </if>
+
+        where
+        escs.teacher_id =po.id
+        <if test="startTimeStamp>0">
+            and escs.concrete_stamp_start>=#{startTimeStamp}
+        </if>
+        <if test="endTimeStamp>0">
+            and #{endTimeStamp}>=escs.concrete_stamp_end
+        </if>
+        <if test="weekDay != null">
+            and escs.week=#{weekDay}
+        </if>
+        <if test="courseName!=null and courseName!=''">
+            and escs.class_name like concat(#{courseName},'%')
+        </if>
+        order by escs.date_time,esct.class_num asc
+    </select>
+    <select id="selSmartClassIng" resultType="com.eluolang.playground.dto.EllSmartClassScheduleDto">
+        select escs.id
+        , escs.class_name as courseName
+        , escs.teacher_id
+        , po.nickname as teacherName
+        , escs.concrete_start
+        , escs.concrete_stamp_start
+        , escs.concrete_end
+        , escs.concrete_stamp_end
+        , escs.school_id
+        , escs.class_id
+        , escs.week
+        , escs.date_time
+        , pd.dept_name as className
+        ,escs.location
+        ,esct.class_num as courseNum
+        from ell_smart_class_schedule escs
+        left join pf_depart pd on pd.id = escs.class_id
+        left join pf_operator po
+        on po.path like concat((SELECT path FROM pf_operator WHERE id = #{accountId}), '%')
+        left join ell_smart_class_time esct
+        on #{nowTimeStamp} >= esct.time_stamp_start and time_stamp_end > #{nowTimeStamp}
+        where escs.teacher_id = po.id
+        <if test="courseName!=null and courseName!=''">
+            and escs.class_name like concat(#{courseName},'%')
+        </if>
+    </select>
+    <select id="selCourseTimeByClassId" resultType="com.eluolang.common.core.pojo.EllSmartClassTime">
+        select esct.*
+        from ell_smart_class_time esct
+                 left join pf_depart pd
+                           on (select path from pf_depart where id = #{orgId}) like concat(pd.path, '%') and
+                              is_school = 1
+        where school_id = pd.id
+        order by class_num
+    </select>
+    <select id="selCourseTimeByCourseId" resultType="com.eluolang.playground.dto.EllSmartClassTimeDto">
+        select class_num as 'index', time_end as endTime, time_start as beginTime
+        from ell_smart_class_time
+        where school_id = #{orgId}
+        order by class_num
+    </select>
+    <select id="selClassTimeById" resultType="com.eluolang.common.core.pojo.EllSmartClassTime">
+        select *
+        from ell_smart_class_time
+        where id = #{Id}
+    </select>
+    <select id="selGradeAvgAndMax" resultType="com.eluolang.playground.dto.EllSmartGradeDto">
+        select pro_name, avg(data) as avgGrade, max(data) as maxGrade
+        from ell_class_history
+        where course_id = #{courseId}
+          and org_id = #{classId}
+        group by pro_id
+    </select>
+    <select id="selUserGrade" resultType="com.eluolang.playground.dto.EllStudentGradeDto">
+        select ech.pro_name, ech.data as dataGrade, etp.pro_unit as unit,ech.pro_id,ech.extra_data
+        from ell_class_history ech
+        left join ell_test_project etp on etp.id = ech.pro_id
+        where ech.user_id = #{userId}
+        <if test="courseId!=null and courseId1=''">
+            and ech.course_id = #{courseId}
+        </if>
+        order by ech.create_time desc
+    </select>
+    <select id="selUserAndCourse" resultType="com.eluolang.playground.dto.EllUserCourseDto">
+        select eu.user_name,
+               pd.dept_name                         as className,
+               concat(esct.time_end, '-', time_end) as times,
+               escs.date_time,
+               eu.student_code,
+               escs.class_name                      as courseName
+        from ell_user eu
+                 left join ell_smart_class_schedule escs
+                           on escs.id = #{courseId}
+                 left join pf_depart pd on pd.id = eu.org_id
+                 left join ell_smart_class_time esct on esct.id = escs.class_time_id
+        where eu.id = #{userId}
+          and eu.is_delete = 0
+    </select>
+    <select id="selVideoByUserId" resultType="com.eluolang.common.core.pojo.EllClassVideo">
+        select ecv.*,etp.pro_name as proName
+        from ell_class_video ecv
+        left join ell_test_project etp on etp.id=ecv.pro_id
+        where ecv.user_id = #{userId}
+        and ecv.course_id = #{courseId}
+        <if test="proId!=null">
+            and ecv.pro_id=#{proId}
+        </if>
+    </select>
+    <select id="selUserByCourseId" resultType="com.eluolang.playground.dto.EllGetUserByCourseIdDto">
+        select eu.id,
+        eu.user_name as name,
+        eu.student_id,
+        eu.student_code,
+        eu.org_id,
+        pd.dept_name as orgName,
+        eu.user_sex as sex,
+        fm.file_url
+        from ell_user eu
+        left join pf_depart pd on pd.id = eu.org_id
+        left join img_user_relevance iur on iur.user_id = eu.id
+        left join file_mgr fm on fm.id = iur.file_img_id
+        left join ell_smart_class_schedule escs on escs.id = #{courseId}
+        where eu.org_id = escs.class_id
+        and eu.is_delete=0
+        <if test="userName!=null and userName!=''">
+            and eu.user_name like concat('%',#{userName},'%')
+        </if>
+    </select>
+    <select id="selPlanFlatPlate" resultType="com.eluolang.playground.dto.EllFlatPlatePlanDto">
+        select a.*,
+        c.nickname as authName
+        from ell_plan a
+        left join ell_use_plan_department b on a.id = b.plan_id
+        left join pf_operator c on c.id = a.create_by_id
+        where a.is_exam = #{isExam}
+        and a.is_delete = 0
+        and (a.create_by_id = #{accountOrgId}
+        or (a.plan_state >= 2 and (
+        b.org_id in (select rat
+        from pf_operator_rat
+        where opt_id = #{accountOrgId}
+        and `module` = 2)
+        or a.create_by_id in (SELECT id
+        FROM pf_operator
+        WHERE path like
+        concat((SELECT path FROM pf_operator WHERE id = #{accountOrgId}), '%'))
+        ))
+        )
+        <if test="status!=null">
+            and a.plan_state=#{status}
+        </if>
+        GROUP BY a.id
+        order by a.plan_state,a.create_time desc
+    </select>
+    <select id="selPlanStatusNum" resultType="com.eluolang.playground.vo.EllPlanStatusNumVo">
+        select IF(count(DISTINCT a.id) IS NULL,0,count(DISTINCT a.id)) as num ,a.plan_state as status
+        from ell_plan a
+        left join ell_use_plan_department b on a.id = b.plan_id
+        left join pf_operator c on c.id = a.create_by_id
+        where a.is_delete = 0
+        <if test="isExam!=null">
+            and a.is_exam = #{isExam}
+        </if>
+        and (a.create_by_id = #{accountOrgId}
+        or (a.plan_state >= 2 and (
+        b.org_id in (select rat
+        from pf_operator_rat
+        where opt_id = #{accountOrgId}
+        and `module` = 2)
+        or a.create_by_id in (SELECT id
+        FROM pf_operator
+        WHERE path like
+        concat((SELECT path FROM pf_operator WHERE id = #{accountOrgId}), '%'))
+        ))
+        )
+        <if test="status!=null">
+            and a.plan_status=#{status}
+        </if>
+        GROUP BY a.plan_state
+        order by a.plan_state
+    </select>
+    <select id="selProScore" resultType="com.eluolang.playground.dto.EllProScoreDto">
+        SELECT SUM(ech.data) as sumScore,min(ech.data) as minScore,max(ech.data) as
+        maxScore,ech.pro_name,eu.user_name,etp.pro_unit as unit,eu.user_sex,eu.id as userId
+        FROM ell_class_history ech
+        left join ell_user eu on eu.id=ech.user_id and eu.is_delete=0
+        LEFT JOIN ell_test_project etp on etp.id=ech.pro_id
+        WHERE MONTH(ech.create_time)= MONTH(NOW())
+        AND YEAR(ech.create_time)=YEAR(NOW())
+        and ech.pro_id=#{proId}
+        and ech.org_id in (select id from pf_depart where path like concat((select path from pf_depart where
+        id=#{orgId})
+        , '%'))
+        GROUP BY ech.user_id
+        <if test="type==1">
+            order by MIN(ech.data) asc
+        </if>
+        <if test="type==2">
+            order by max(ech.data) desc
+        </if>
+        <if test="type==3">
+            order by SUM(ech.data) desc
+        </if>
+    </select>
+    <select id="selDevice" resultType="com.eluolang.common.core.pojo.EllDevice">
+        select *
+        from ell_smart_device_management
+        where device_id = #{deviceId}
+    </select>
+    <select id="selTestPeoNum" resultType="java.lang.Integer">
+        select count(DISTINCT user_id)
+        from ell_class_history
+        where TO_DAYS(create_time) = TO_DAYS(#{day})
+          and ech.org_id in (select id
+                             from pf_depart
+                             where path like concat((select path
+                                                     from pf_depart
+                                                     where id = #{orgId})
+                                 , '%'))
+    </select>
+    <select id="selProTestNum" resultType="com.eluolang.playground.dto.EllProTestNumDto">
+        select pro_name, count(id)
+        from ell_class_history
+        where MONTH (create_time)= MONTH (#{day})
+          AND YEAR (create_time)= YEAR (#{day})
+          and ech.org_id in (select id
+            from pf_depart
+            where path like concat((select path
+            from pf_depart
+            where id = #{orgId})
+            , '%'))
+    </select>
+    <select id="selProTestNumDay" resultType="com.eluolang.playground.dto.EllProTestNumDto">
+        select pro_name, count(id)
+        from ell_class_history
+        where to_days(create_time) = to_days(#{day})
+          and ech.org_id in (select id
+                             from pf_depart
+                             where path like concat((select path
+                                                     from pf_depart
+                                                     where id = #{orgId})
+                                 , '%'))
+    </select>
+    <select id="selProSexNumDay" resultType="java.lang.Integer">
+        select pro_name, count(id)
+        from ell_class_history
+        where to_days(create_time) = to_days(#{day})
+        and ech.org_id in (select id
+        from pf_depart
+        where path like concat((select path
+        from pf_depart
+        where id = #{orgId})
+        , '%'))
+        <if test="sex!=null">
+            and user_sex=#{sex}
+        </if>
+    </select>
+    <select id="selTestProName" resultType="java.lang.String">
+        select pro_name
+        from ell_class_history
+        where org_id in (select id
+                         from pf_depart
+                         where path like concat((select path
+                                                 from pf_depart
+                                                 where id = #{orgId})
+                             , '%'))
+    </select>
+    <select id="selSchoolNum" resultType="java.lang.Integer">
+        select count(id)
+        from ell_user
+        where org_id in
+        (select id from pf_depart where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        <if test="sex!=null">
+            and user_sex=#{sex}
+        </if>
+        and is_delete=0
+    </select>
+    <select id="selTeacher" resultType="com.eluolang.common.core.pojo.PfOperator">
+        select po.*
+        from pf_operator po
+        left join pf_operator_rat por on por.rat = #{schoolId} and module = 2
+        where po.id=por.opt_id
+        <if test="accountId!=0 and accountId!=1">
+            and po.id in (select id from pf_operator where path like concat((select
+            path from pf_operator where id=#{accountId})
+            , '%'))
+        </if>
+        and opt_type=1
+    </select>
+    <select id="selSchoolsByOrgId" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select *
+        from pf_depart
+        where
+        is_school=1
+        <if test="type">
+            and path like
+            concat((select path
+            from pf_depart
+            where id=#{orgId}),'%')
+        </if>
+        <if test="!type">
+            and (select path
+            from pf_depart
+            where id=#{orgId}) like
+            concat(path,'%')
+        </if>
+    </select>
+    <select id="selDailyPlan" resultType="com.eluolang.common.core.pojo.EllDailyExercisePlan">
+        select *
+        from ell_daily_exercise_plan
+        where use_orgId = #{schoolId}
+    </select>
+    <select id="selDailyRunMileage" resultType="java.lang.Integer">
+        select sum(mileage)
+        from ell_daily_history
+        where dailY_id = #{dailyPlanId}
+    </select>
+    <select id="selSmartTestNum" resultType="java.lang.Integer">
+        select COUNT(DISTINCT user_id)
+        FROM ell_class_history
+        WHERE org_id in
+              (SELECT id FROM pf_depart WHERE path like CONCAT((SELECT path FROM pf_depart where id = #{orgId}), '%'))
+    </select>
+    <select id="selSmartTestTimes" resultType="java.lang.Integer">
+        select count(id)
+        FROM ell_class_history
+        WHERE org_id in
+              (SELECT id
+               FROM pf_depart
+               WHERE path like CONCAT((SELECT path FROM pf_depart where id = #{orgId})
+                   , '%'))
+    </select>
+    <select id="selClassId" resultType="java.lang.String">
+        SELECT id
+        FROM pf_depart
+        WHERE path like CONCAT((SELECT path FROM pf_depart where id = #{orgId}), '%')
+          and last_level = 1
+    </select>
+    <select id="selInfoDevice" resultType="com.eluolang.playground.dto.EllDeviceInfoDto">
+        select interval_time, info_type, text, id as infoId
+        from ell_information
+        where id in
+              (select info_id from ell_info_publish_target where device_id = #{deviceId} order by release_order asc)
+          and info_type like concat('%', #{type}, '%')
+          and state = 2
+          and is_delete = 0
+    </select>
+    <select id="selInfoFile" resultType="java.lang.String">
+        select file_url
+        from file_mgr
+        where id in (select file_id from ell_info_file where info_id = #{infoId})
+    </select>
+    <select id="selDailyRunRanking" resultType="com.eluolang.playground.dto.EllProRankUserDto">
+        SELECT sum(edh.mileage) as score,eu.user_name,eu.user_sex,edh.user_id
+        from ell_daily_history edh
+        left join ell_user eu on eu.id = edh.user_id
+        where daily_id in (
+        <foreach collection="dailyIds" separator="," item="dailyId">
+            #{dailyId}
+        </foreach>
+        )
+        and to_days(create_time) >= (to_days(now()) - #{dayNum})
+        and eu.is_delete = 0
+        order by sum(edh.mileage) desc
+    </select>
+    <select id="selClass" resultType="com.eluolang.common.core.pojo.PfDepart">
+        SELECT *
+        FROM pf_depart
+        WHERE path like CONCAT((SELECT path FROM pf_depart where id = #{orgId}), '%')
+          and last_level = 1
+    </select>
+    <select id="selPassNumBy30DayClass" resultType="java.lang.Integer">
+        select count(DISTINCT user_id) / (select * from ell_user where org_id = #{classId})
+        from ell_daily_history
+        where sum(mileage) >= #{passNum}
+          and TO_DAYS(create_time) >= TO_DAYS(now()) - 30
+          and user_id in (select id from ell_user where org_id = #{classId} and is_delete = 0)
+    </select>
+    <select id="selConstitutionRules" resultType="com.eluolang.playground.dto.EllConstitutionRulesDto">
+        select ecr.grade, etr.rule_name, etr.id as ruleId
+        from ell_constitution_rules ecr
+                 left join ell_test_rules etr on etr.id = ecr.rules_id
+        where school_id = #{schoolId}
+    </select>
+
+</mapper>

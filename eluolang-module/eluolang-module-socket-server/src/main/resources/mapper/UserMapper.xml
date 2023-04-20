@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.module.socket.server.mapper.UserMapper">
+    <select id="selSignUserByCode" resultType="com.eluolang.common.core.pojo.EllUser">
+        select eu.*
+        from ell_user eu LEFT JOIN img_user_relevance iur on eu.id = iur.user_id
+        where iur.megvii_image_id = #{imgId}
+    </select>
+
+    <select id="selPlanDataById" resultType="com.eluolang.common.core.pojo.EllDailyExercisePlan">
+       select * from ell_daily_exercise_plan where use_orgId =  (select id
+        from pf_depart as a,
+             (select getParentList(#{deptId}) ids) as b
+        where FIND_IN_SET(id, ids)
+          and is_school = 1)
+    </select>
+</mapper>

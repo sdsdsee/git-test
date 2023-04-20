@@ -1,0 +1,535 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.PhysicalDataMapper">
+
+    <select id="selDepartByIdList" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select * from pf_depart where id in (
+        <foreach collection="deptIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+    </select>
+
+    <select id="selIsSchoolByIdList" resultType="com.eluolang.common.core.hardware.vo.PfDepartVo">
+        select * from pf_depart where id in (
+        <foreach collection="idList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and is_school = 1
+    </select>
+
+    <select id="selSchoolUserCount" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user eu
+                 LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        where pd.path like CONCAT(#{path}, '%')
+          and pd.is_delete = 0
+          and eu.is_delete = 0
+    </select>
+
+    <select id="selUserCountByDeptIdList" resultType="java.lang.Integer">
+        select count(*) from ell_user where org_id in (
+        <foreach collection="ids" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and is_delete=0
+    </select>
+
+    <select id="selUserTestSuccessCount" resultType="java.lang.Integer">
+        select count(*) from ell_plan_end_score epes
+        LEFT JOIN ell_user eu on epes.user_id = eu.id and eu.is_delete=0
+        where eu.org_id in (
+        <foreach collection="deptIds" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+        <if test="planId!=null and planId!=''">and epes.plan_id = #{planId}</if>
+    </select>
+
+    <select id="selPlanProjectChanceByPlanId" resultType="com.eluolang.physical.model.EachProjectScoreVo">
+        select pro_id, pro_name
+        from plan_project_chance
+        where plan_id = #{planId}
+    </select>
+
+    <select id="selEachProjectScore" resultType="com.eluolang.physical.model.EachProjectScoreVo">
+        select (select count(*) from ell_test_history where score between 10 and 29 and plan_id = #{planId} and
+        is_delete=0 and
+        test_project = #{proId} and org_id in (
+        <foreach collection="deptId" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )) oneScore,
+        (select count(*) from ell_test_history where score between 30 and 59 and plan_id = #{planId} and is_delete=0 and
+        test_project =
+        #{proId} and org_id in (
+        <foreach collection="deptId" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )) twoScore,
+        (select count(*) from ell_test_history where score between 60 and 100 and is_delete=0 and plan_id = #{planId}
+        and test_project =
+        #{proId} and org_id in (
+        <foreach collection="deptId" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )) threeScore
+    </select>
+
+    <select id="selSchoolScore" resultType="com.eluolang.physical.model.SchoolScoreVo">
+        select (select count(*) from ell_plan_end_score epes LEFT JOIN ell_user eu on epes.user_id = eu.id
+        where epes.end_score BETWEEN 10 and 29 and epes.plan_id = #{planId} and eu.org_id in (
+        <foreach collection="deptIds" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and eu.is_delete = 0) as oneScore,
+        (select count(*) from ell_plan_end_score epes LEFT JOIN ell_user eu on epes.user_id = eu.id
+        where epes.end_score BETWEEN 30 and 59 and epes.plan_id = #{planId} and eu.org_id in (
+        <foreach collection="deptIds" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and eu.is_delete = 0) as twoScore,
+        (select count(*) from ell_plan_end_score epes LEFT JOIN ell_user eu on epes.user_id = eu.id
+        where epes.end_score BETWEEN 60 and 100 and epes.plan_id = #{planId} and eu.org_id in (
+        <foreach collection="deptIds" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and eu.is_delete = 0) as threeScore
+    </select>
+
+    <select id="selPlanEachScore" resultType="com.eluolang.physical.model.PlanEachScoreVo">
+        select COUNT(CASE WHEN epes.end_score between 10 and 19 THEN epes.end_score END) oneScore,
+        COUNT(CASE WHEN epes.end_score between 20 and 39 THEN epes.end_score END) twoScore,
+        COUNT(CASE WHEN epes.end_score between 40 and 59 THEN epes.end_score END) threeScore,
+        COUNT(CASE WHEN epes.end_score between 60 and 79 THEN epes.end_score END) fourScore,
+        COUNT(CASE WHEN epes.end_score between 80 and 100 THEN epes.end_score END) fiveScore
+        from ell_plan_end_score epes LEFT JOIN ell_user eu on epes.user_id = eu.id
+        where epes.plan_id = #{planId} and eu.org_id in (
+        <foreach collection="deptIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and eu.is_delete = 0
+    </select>
+
+    <select id="selConfirmAchievement" resultType="com.eluolang.physical.model.ConfirmAchievementVo">
+        select (select COUNT(*) from ell_user where org_id in (
+        <foreach collection="deptIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and is_delete=0) as totalNumber,
+        COUNT(CASE WHEN eu.user_sex = 1 THEN eu.user_sex END) manNumber,
+        COUNT(CASE WHEN eu.user_sex = 2 THEN eu.user_sex END) womanNumber
+        FROM ell_score_verify esv
+        LEFT JOIN ell_user eu on eu.is_delete = 0 and eu.id=esv.user_id
+        where esv.plan_id = #{planId}
+    </select>
+    <select id="selEachRetestNumber" resultType="java.lang.Integer">
+        select count(*) from ell_test_history where plan_id = #{planId}
+        and test_project = #{proId} and is_delete=0
+        and org_id in (
+        <foreach collection="deptIdList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        )
+        and is_retest = 2
+    </select>
+    <select id="findNumberOfPeople" resultType="java.lang.Integer">
+        select count(id)
+        from ell_user
+        where is_delete = 0
+        and org_id in (SELECT id
+        FROM pf_depart
+        WHERE path like CONCAT(#{path}
+        , '%')
+        <if test="accountId != 1 and accountId != 0">
+            and id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>)
+    </select>
+    <select id="findExamNumberOfPeople" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user a
+        left join ell_use_plan_department b on b.plan_id = #{planId}
+        where a.org_id = b.org_id and a.is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+    </select>
+    <select id="findExamFinishNumberOfPeople" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user a
+        left join ell_plan_end_score b on b.plan_id = #{planId}
+        where a.id=b.user_id and a.is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+    </select>
+    <select id="findRetestNumberOfPeople" resultType="java.lang.String">
+        select a.id
+        from ell_user a
+        left join ell_test_history b on b.plan_id = #{planId} and b.is_retest = 2
+        where a.id=b.user_id and a.is_delete=0 and b.is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        group by b.user_id
+    </select>
+    <select id="findExamSexNumberOfPeople" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user a
+        left join ell_use_plan_department b on b.plan_id = #{planId}
+        where a.org_id = b.org_id and a.user_sex=#{sex} and a.is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+    </select>
+    <select id="findClassNumberOf" resultType="java.lang.Integer">
+        select count(*) from pf_depart a
+        left join ell_use_plan_department b on b.plan_id = #{planId}
+        where b.org_id=a.id and a.last_level=1
+        <if test="accountId != 1 and accountId != 0">
+            and a.id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+    </select>
+    <select id="findFreeTest" resultType="java.lang.Integer">
+        select count(*)
+        from ell_avoid_test
+        where plan_id=#{planId}
+        <if test="accountId != 1 and accountId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+    </select>
+    <select id="findRetestNumberOf" resultType="java.lang.String">
+        select id
+        from ell_test_history
+        where plan_id = #{planId}
+        and is_retest = 2 and is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        group by user_id
+    </select>
+    <select id="findDisQualifiedNumberOf" resultType="java.lang.Integer">
+        select count(*)
+        from ell_plan_end_score a
+        left join ell_user b on b.id=a.user_id and b.is_delete=0
+        where a.plan_id = #{planId}
+        and 60 > a.end_score
+        <if test="accountId != 1 and accountId != 0">
+            and b.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+    </select>
+    <select id="findPlanTitle" resultType="java.lang.String">
+        select plan_title
+        from ell_plan
+        where id = #{planId}
+    </select>
+
+    <select id="findTestProject" resultType="com.eluolang.physical.model.EllTestProjectVo">
+        select *
+        from plan_project_chance
+        where plan_id = #{planId}
+    </select>
+    <select id="selSchoolInformation" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select pd.*
+        from ell_use_plan_department eupd,
+             pf_depart pd,
+             (select rat as id from pf_operator_rat WHERE `module` = 2 and opt_id = #{optId}) as d
+        where eupd.org_id = pd.id
+          and eupd.org_id = d.id
+          and eupd.plan_id = #{planId}
+          and pd.is_school = 1
+    </select>
+    <select id="findProjectRestTestNumberOf" resultType="java.lang.Integer">
+        select count(*) from ell_test_history where plan_id=#{planId} and test_project=#{proId} and is_retest=2 and
+        is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="orgId!=0">
+            and org_id in
+            (select id from pf_depart where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        </if>
+    </select>
+    <select id="termSelectClass" resultType="java.lang.Integer">
+        select pd.id
+        from ell_use_plan_department eupd,
+             pf_depart pd,
+             (select a.id as id
+              from pf_depart a
+                       LEFT JOIN pf_operator_rat b on a.id = b.rat and b.module = 2
+              WHERE b.opt_id = #{optId}
+                and a.path like CONCAT((select path from pf_depart where id = #{deptId}), '%')) as d
+        where eupd.org_id = pd.id
+          and eupd.org_id = d.id
+          and eupd.plan_id = #{planId}
+          and pd.last_level = 1
+    </select>
+
+    <select id="selEachClassScore" resultType="com.eluolang.physical.model.ClassScoreVo">
+        select pd.id,pd.dept_name,COUNT(CASE WHEN epes.end_score between 0 and 59 THEN epes.end_score END) fail,
+        COUNT(CASE WHEN epes.end_score between 60 and 69 THEN epes.end_score END) pass,
+        COUNT(CASE WHEN epes.end_score between 70 and 89 THEN epes.end_score END) good,
+        COUNT(CASE WHEN epes.end_score between 90 and 100 THEN epes.end_score END) excellent from pf_depart pd
+        LEFT JOIN ell_user eu on pd.id = eu.org_id
+        LEFT JOIN ell_plan_end_score epes on eu.id = epes.user_id
+        where eu.org_id in (
+        <foreach collection="deptList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and eu.is_delete = 0 GROUP BY pd.id
+    </select>
+    <select id="findTotalityCondition" resultType="java.lang.Integer">
+        select count(*)
+        from ell_test_history
+        where plan_id = #{planId}
+        and comment = #{scoreCondition} and test_project=#{proId} and is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="userSex!=0">
+            and user_sex=#{userSex}
+        </if>
+        <if test="orgId!=0">
+            and org_id in
+            (select id from pf_depart where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        </if>
+    </select>
+    <select id="selEachClassNumber" resultType="com.eluolang.physical.model.ClassNumberVo">
+        select pd.id,pd.dept_name,COUNT(eu.id) total,
+        COUNT(CASE WHEN eu.user_sex = 1 THEN eu.user_sex END) man,
+        COUNT(CASE WHEN eu.user_sex = 2 THEN eu.user_sex END) woman from pf_depart pd
+        LEFT JOIN ell_user eu on pd.id = eu.org_id
+        where pd.id in (
+        <foreach collection="deptList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and eu.is_delete = 0 GROUP BY pd.id
+    </select>
+    <select id="findProjectNumberOf" resultType="java.lang.Integer">
+        select count(DISTINCT a.id)
+        from ell_user a
+        left join plan_project_chance b on b.plan_id = #{planId}
+        <if test="proId>0 and proId!=1">and b.pro_id = #{proId}</if>
+        left join ell_use_plan_department c on c.plan_id = #{planId}
+        where b.use_sex like CONCAT('%',a.user_sex , '%') and a.org_id=c.org_id and a.is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="userSex!=0">
+            and a.user_sex=#{userSex}
+        </if>
+        <if test="orgId!=0">
+            and a.org_id in
+            (select id from pf_depart where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        </if>
+    </select>
+    <select id="selSchoolNumber" resultType="com.eluolang.physical.model.SchoolNumberVo">
+        select COUNT(id) total,
+        COUNT(CASE WHEN user_sex = 1 THEN user_sex END) man,
+        COUNT(CASE WHEN user_sex = 2 THEN user_sex END) woman from ell_user
+        where org_id in (
+        <foreach collection="deptList" index="index" item="item" separator=",">
+            #{item}
+        </foreach>
+        ) and is_delete = 0
+    </select>
+    <select id="findProjectSexTestNumberOf" resultType="java.lang.Integer">
+        select count(*) from ell_test_history where plan_id=#{planId} and test_project=#{proId} and
+        user_sex= #{userSex} and is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="orgId!=0">
+            and org_id in
+            (select id from pf_depart where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        </if>
+    </select>
+    <select id="findProjectTestNumberOf" resultType="java.lang.Integer">
+        select count(DISTINCT user_id) from ell_test_history where plan_id=#{planId}
+        <if test="proId !=null and proId!=0 and proId!=-1">
+            and test_project=#{proId}
+        </if>
+        and is_delete=0
+        <if test="accountId != 1 and accountId != 0">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{accountId} and `module` = 2)
+        </if>
+        <if test="orgId!=0">
+            and org_id in
+            (select id from pf_depart where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        </if>
+    </select>
+    <select id="selSchoolPath" resultType="java.lang.String">
+        SELECT pd.path
+        FROM ell_use_plan_department eupd
+                 LEFT JOIN pf_depart pd on pd.is_school = 1 and
+                                           (SELECT path FROM pf_depart WHERE id = eupd.org_id) like CONCAT(pd.path, '%')
+        WHERE eupd.plan_id = #{planId}
+        group by pd.id
+    </select>
+    <select id="selProAvgScore" resultType="com.eluolang.physical.dto.EllProAvgScoreDto">
+        select avg(score) as avgScore,count(user_id) as num
+        from ell_test_history
+        where plan_id = #{planId}
+        and org_id in
+        (select id from pf_depart where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        and org_id in (select rat from pf_operator_rat where module =2
+        <if test="accountOrgId!=0 and accountOrgId!=1">
+            and opt_id = #{accountOrgId}
+        </if>
+        and rat in (SELECT org_id FROM ell_use_plan_department where plan_id=#{planId}))
+        and test_project=#{proId}
+        <if test="sex!=0">
+            and user_sex=#{sex}
+        </if>
+    </select>
+    <select id="selSchoolTotalScore" resultType="com.eluolang.physical.dto.EllTotalScoreDto">
+        select sum(end_score) as totalScore, count(user_id) as referenceNum, avg(end_score) as totalAvgScore
+        from ell_plan_end_score
+        where plan_id = #{planId}
+        and user_id in
+        (select id
+        from ell_user
+        where org_id in
+        (select id
+        from pf_depart
+        where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        and org_id in (select rat from pf_operator_rat where module =2
+        <if test="accountOrgId!=0 and accountOrgId!=1">
+            and opt_id = #{accountOrgId}
+        </if>
+        and rat in (SELECT org_id FROM ell_use_plan_department where plan_id=#{planId}))
+        <if test="sex==1 or sex==2">
+            and user_sex=#{sex}
+        </if>
+        )
+    </select>
+    <select id="selFllScore" resultType="com.eluolang.physical.dto.EllFullScoreDto">
+        select count(user_id)as num , project_name as proName
+        from ell_test_history
+        where plan_id = #{planId}
+        and score >= #{score}
+        and org_id in
+        (select id
+        from pf_depart
+        where path like concat((select path from pf_depart where id = #{orgId})
+        , '%'))
+        and org_id in (select rat
+        from pf_operator_rat
+        where
+        module =2
+        <if test="accountId!=0 and accountId!=1">
+            and opt_id = #{accountId}
+        </if>
+        and rat in (SELECT org_id FROM ell_use_plan_department where plan_id=#{planId}))
+        and test_project in (select pro_id from plan_project_chance where plan_id=#{planId})
+        <if test="proId!=-1  and proId !=0">
+            and test_project=#{proId}
+        </if>
+        <if test="userSex!=0">
+            and user_sex=#{userSex}
+        </if>
+    </select>
+    <select id="selPlanOrgIdPeopleNum" resultType="java.lang.Integer">
+        select count(*)
+        from ell_user
+        where org_id in (select rat
+        from pf_operator_rat
+        where
+        module =2
+        <if test="accountOrgId!=0 and accountOrgId!=1">
+            and opt_id = #{accountOrgId}
+        </if>
+        and rat in (SELECT org_id FROM ell_use_plan_department where plan_id=#{planId}))
+        and org_id in (select id
+        from pf_depart
+        where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        and is_delete=0
+        <if test="sex!=0">
+            and user_sex=#{sex}
+        </if>
+    </select>
+    <select id="selFullEndScorePeople" resultType="java.lang.Integer">
+        select count(user_id)
+        from ell_plan_end_score
+        where plan_id = #{planId}
+        and end_score>=#{score}
+        and user_id in
+        (select id
+        from ell_user
+        where org_id in
+        (select id
+        from pf_depart
+        where path like concat((select path from pf_depart where id = #{orgId}), '%'))
+        and org_id in (select rat from pf_operator_rat where module =2
+        <if test="accountOrgId!=0 and accountOrgId!=1">
+            and opt_id = #{accountOrgId}
+        </if>
+        and rat in (SELECT org_id FROM ell_use_plan_department where plan_id=#{planId}))
+        <if test="sex!=0">
+            and user_sex=#{sex}
+        </if>
+        )
+
+    </select>
+    <select id="selRuleScore" resultType="com.eluolang.physical.model.EllScoreRule">
+        select *
+        from ell_test_rules_score
+        where parent_id = (select id
+                           from ell_test_rules
+                           where pro_id = #{proId}
+                             and parent_id = (select use_rule
+                                              from ell_use_plan_department
+                                              where plan_id = #{planId}
+                                                and org_id = #{orgId}))
+          and remark = #{evaluation}
+        order by rule_score asc
+    </select>
+    <select id="selPlanProId" resultType="com.eluolang.common.core.pojo.EllPlanProjectChance">
+        select *
+        from plan_project_chance
+        where plan_id = #{planId}
+        <if test="isMust==1">and essential = 1</if>
+        <if test="isMust==2">and essential = 2</if>
+        <if test="sex!=null">and use_sex like concat('%',#{sex},'%')</if>
+        <if test="proId!=0">
+            and pro_id=#{proId}
+        </if>
+    </select>
+    <select id="selEndScoreByScore" resultType="java.lang.Integer">
+        select count(id)
+        from ell_user
+        where is_delete = 0
+
+        and org_id in (
+        select org_id
+        from ell_use_plan_department
+        where plan_id = #{planId}
+        <if test="accountOrgId!=0 and accountOrgId!=1">
+            and org_id in(select rat from pf_operator_rat where opt_id =#{accountOrgId} and module=2)
+        </if>
+        )
+        and org_id in (select id from pf_depart where path like concat((select path from pf_depart where
+        id=#{orgId}),'%'))
+        and id in(select user_id from ell_plan_end_score where plan_id=#{planId}
+        <if test="notScore!=null">
+            and end_score!=#{notScore}
+        </if>
+        <if test="big !=0">
+            and #{big}>=end_score
+        </if>
+        and end_score>=#{small}
+        )
+        <if test="sex==1 or sex==2">
+            and user_sex=#{sex}
+        </if>
+
+    </select>
+    <select id="selProProportion" resultType="java.lang.Integer">
+        select pro_gdp
+        from plan_project_chance
+        where plan_id = #{planId}
+          and pro_id = #{proId}
+    </select>
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.Depart//DTD Mapper 3.0//EN" "http://mybatis.Depart/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.eluolang.module.sys.user.mapper.OperatorRatMapper">
+
+	<insert id="regOperatorRat">
+		INSERT INTO pf_operator_rat(
+		    id
+			,opt_id
+			,module
+			,rat
+		)
+		VALUES(
+		    #{id}
+			,(select id from pf_operator where opt_name = #{optId})
+			,#{module}
+			,#{rat}
+		);
+	</insert>
+	
+	<delete id="delOperatorRat">
+        delete from pf_operator_rat where module = #{module} AND rat = #{rat}
+    </delete>
+</mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.device.mapper.LargeScreenMapper">
+    <select id="selOperIdByDeviceId" resultType="java.lang.Integer">
+        select eor.opt_id from ell_info_device ed
+        LEFT JOIN pf_operator_rat eor
+        on ed.id = eor.rat and eor.module = 2 where ed.device_id = #{deviceId}
+    </select>
+
+    <insert id="addToiletEvaluate">
+        insert into toilet_evaluate(id,device_id,evaluate_level,create_time)
+        values (#{id},#{deviceId},#{evaluateLevel},NOW())
+    </insert>
+
+    <select id="selToiletEvaluate" resultType="com.eluolang.common.core.pojo.ToiletEvaluate">
+        select * from toilet_evaluate where device_id = #{deviceId} order by create_time limit 20
+    </select>
+
+    <select id="selToiletEvaluateByLevel" resultType="java.lang.Integer">
+        SELECT COUNT(*) FROM toilet_evaluate where device_id = #{deviceId} and evaluate_level = #{level}
+    </select>
+
+</mapper>

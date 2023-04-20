@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.platform.mapper.AlarmMapper">
+    <delete id="deleteAlarm">
+        delete
+        from ell_device_alarm
+        where id = #{alarmId}
+    </delete>
+    <select id="selAlarm" resultType="com.eluolang.platform.vo.EllAlarmVo">
+        select ed.device_name, ed.id, ed.location, eda.alarm_time, ed.device_type, eda.id as alarmId,ed.device_id
+        from ell_device_alarm eda
+        left join ell_smart_device_management ed on ed.id = eda.device_id
+        where ed.is_delete = 0
+        <if test="ellAlarmVo.deviceType!=0">
+            and ed.device_type=#{ellAlarmVo.deviceType}
+        </if>
+
+    </select>
+    <select id="selAlarmCount" resultType="java.lang.Integer">
+        select IFNULL(count(*),0)
+        from ell_smart_device_management ed
+        left join ell_device_alarm eda on eda.device_id = ed.id
+        where ed.is_delete = 0 and device_type=#{deviceType}
+        <if test="createBy!=0 and createBy!=1">
+            and ed.id in (select rat from pf_operator_rat where opt_id=#{createBy} and module=2)
+        </if>
+        and to_days(eda.alarm_time)=to_days(#{day})
+</select>
+</mapper>

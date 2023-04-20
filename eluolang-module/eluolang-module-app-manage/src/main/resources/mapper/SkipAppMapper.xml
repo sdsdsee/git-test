@@ -1,0 +1,339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.app.manage.mapper.SkipAppMapper">
+    <insert id="addSkipUserWx">
+        insert into ell_skip_user (id, wx_open_id, create_time, phone, user_id, is_delete, user_role, is_tourist,
+                                   skip_id_card, user_name, img_id)
+        values (#{ellSkipUserVo.id}, #{ellSkipUserVo.wxOpenId}, #{ellSkipUserVo.createTime}, #{ellSkipUserVo.phone},
+                #{ellSkipUserVo.userId}, 0,
+                #{ellSkipUserVo.userRole}, #{ellSkipUserVo.isTourist},
+                #{ellSkipUserVo.idCard}, #{ellSkipUserVo.userName}, #{ellSkipUserVo.imgId})
+    </insert>
+    <insert id="addSkipNum">
+        insert into ell_skip_number(id, skip_user_id, skip_num, skip_pattern, skip_time, create_time, is_homework,
+                                    homework_id, skip_avg)
+        values (#{ellSkipNumberVo.id}, #{ellSkipNumberVo.skipUserId}, #{ellSkipNumberVo.skipNum},
+                #{ellSkipNumberVo.skipPattern}, #{ellSkipNumberVo.skipTime}, #{ellSkipNumberVo.createTime},
+                #{ellSkipNumberVo.isHomework}, #{ellSkipNumberVo.homeworkId}, #{ellSkipNumberVo.skipAvg})
+    </insert>
+    <insert id="addUserSkipDevice">
+        insert into ell_skip_device (id, user_id, device_coding)
+        values (#{id}, #{userId}, #{deviceCoding});
+    </insert>
+    <insert id="addIdentification">
+        insert into ell_user_identification(user_id, identification)
+        values (#{skipUserId}, #{identification})
+    </insert>
+    <insert id="addContest">
+        insert into ell_skip_join_contest(id, skip_user_id, con_test_id, state, user_name, age, con_number,
+                                          skip_ranking, create_time)
+        values (#{ellSkipJoinContest.id}, #{ellSkipJoinContest.skipUserId}, #{ellSkipJoinContest.conTestId},
+                #{ellSkipJoinContest.state}, #{ellSkipJoinContest.userName}, #{ellSkipJoinContest.age},
+                #{ellSkipJoinContest.conNumber}, 99999, #{ellSkipJoinContest.createTime})
+    </insert>
+    <insert id="uploadImage">
+        insert into file_mgr(id, upload_time, file_url, type, size, file_name)
+        values (#{id}, #{uploadTime}, #{fileUrl}, #{type}, #{size}, #{fileName})
+    </insert>
+    <update id="updateRanking">
+
+        UPDATE ell_skip_join_contest
+        set skip_ranking=case
+                             WHEN skip_num_id in (SELECT esn.id
+                                                  FROM ell_skip_number esn
+                                                           LEFT JOIN
+                                                           (SELECT * FROM ell_skip_join_contest WHERE con_test_id = #{conTestId}) esjc
+                                                           on esjc.con_test_id = #{conTestId}
+                                                  WHERE #{avg} > esn.skip_avg
+                                                    and esn.id = esjc.skip_num_id
+                                                    and skip_ranking > esjc.skip_ranking
+                                                  group by esn.skip_user_id)
+                                 then skip_ranking + 1
+                             when skip_user_id = #{skipUserId} then IFNULL((SELECT count(DISTINCT esn.skip_user_id)
+                                                                            FROM ell_skip_number esn
+                                                                                     LEFT JOIN
+                                                                                     (SELECT * FROM ell_skip_join_contest WHERE con_test_id = #{conTestId}) esjc
+                                                                                     on esjc.con_test_id = #{conTestId}
+                                                                            WHERE esn.skip_avg > #{avg}
+                                                                              and esn.skip_user_id!=#{skipUserId}
+                                 and esn.id = esjc.skip_num_id group by esn.skip_user_id),0) + 1
+                             else skip_ranking
+            end,
+            state=2
+        where skip_num_id is not null
+          and con_test_id = #{conTestId}
+          and skip_num_id !='' or skip_user_id = #{skipUserId}
+          and #{avg}
+            >(
+            SELECT esn.skip_avg
+            FROM ell_skip_number esn
+            LEFT JOIN
+            (SELECT * FROM ell_skip_join_contest WHERE con_test_id=#{conTestId})
+            esjc on esjc.con_test_id=#{conTestId}
+            WHERE
+            esn.id = esjc.skip_num_id
+          and esn.skip_user_id = #{skipUserId}
+            )
+
+
+    </update>
+    <update id="updateGrade">
+        UPDATE ell_skip_join_contest
+        set update_time=#{updateTime}
+        <if test="skipNumId!=null and skipNumId!=''">
+            , skip_num_id=#{skipNumId}
+        </if>
+        <if test="videoFileId!=null and videoFileId!=''">
+            , skip_video_id=#{videoFileId}
+        </if>
+        where skip_user_id = #{skipUserId}
+        and con_test_id = #{conTestId}
+        and #{avg}
+        >(
+        SELECT skip_avg
+        FROM ell_skip_number
+        WHERE id = skip_num_id
+        and skip_user_id = #{skipUserId}
+        )
+    </update>
+
+    <select id="findUser" resultType="com.eluolang.app.manage.dto.EllUserVo">
+        select esu.user_id  as id,
+               esu.user_name,
+               eu.student_id,
+               eu.student_code,
+               eu.home_address,
+               eu.en_time,
+               eu.phone,
+               eu.en_grade,
+               esu.wx_open_id,
+               esu.user_role,
+               sys.name     as ethnic,
+               ed.dept_name as className,
+               fi.file_url  as imageUrl
+        from ell_skip_user esu
+                 left join ell_user eu on eu.id = esu.user_id and eu.is_delete = 0
+                 left join pf_depart ed on ed.id = eu.org_id
+                 left join file_mgr fi on fi.id = esu.img_id
+                 left join sys_data_dictionary sys on sys.id = eu.ethnic
+        where esu.wx_open_id = #{wxOpenId}
+          and esu.is_delete = 0
+
+    </select>
+    <select id="findUserIdByIdentification" resultType="java.lang.String">
+        select user_id
+        from ell_user_identification
+        where identification = #{identification}
+    </select>
+    <select id="findUserById" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where id = #{userId}
+          and is_delete = 0
+    </select>
+    <select id="findUserSchoolName" resultType="java.lang.String">
+        SELECT dept_name
+        FROM pf_depart
+        WHERE is_school = 1
+          AND (SELECT path FROM pf_depart WHERE id = #{orgId}) LIKE Concat(path, '%')
+
+    </select>
+    <select id="findUserRoleIsHas" resultType="java.lang.Integer">
+        select count(id)
+        from ell_skip_user
+        where wx_open_id = #{ellSkipUserVo.wxOpenId}
+           or (user_id = #{ellSkipUserVo.userId} and user_role = #{ellSkipUserVo.userRole})
+    </select>
+    <select id="findSkipDayNum" resultType="com.eluolang.app.manage.vo.EllSkipDayNum">
+        select sum(skip_num)as sumSkip,left(create_time,10) as createTime
+        from ell_skip_number
+        where
+        <foreach collection="dayList" item="day" separator="or">
+            (create_time like concat('%',#{day},'%') and skip_user_id = #{skipUserId})
+        </foreach>
+        GROUP BY left(create_time,10) order by create_time asc
+    </select>
+    <select id="findSkipTimeQuantum" resultType="com.eluolang.app.manage.vo.EllSkipNumberVo">
+        select *
+        from ell_skip_number where
+        skip_user_id=#{skipUserId}
+        <if test="isWork != 0">
+            and is_homework=#{isWork}
+        </if>
+        and create_time in (select create_time from ell_skip_number where
+        skip_user_id=#{skipUserId}
+        <if test="isWork != 0">
+            and is_homework=#{isWork}
+        </if>
+        and (
+        <foreach collection="dayList" separator="or" item="day" index="index">
+            create_time like concat('%',#{day},'%')
+        </foreach>
+        )
+        ) order by create_time asc
+    </select>
+    <select id="findDeviceCoding" resultType="com.eluolang.common.core.pojo.EllSkipDevice">
+        select *
+        from ell_skip_device
+        where user_id = #{userId}
+           or device_coding = #{deviceCoding}
+        group by id
+    </select>
+    <select id="findTourist" resultType="com.eluolang.app.manage.dto.EllUserVo">
+        select user_id as id, phone, skip_id_card as idCard, user_role, user_name
+        from ell_skip_user
+        where user_id = #{skipUserId}
+          and user_role = #{role}
+    </select>
+    <select id="findEllSkipContest" resultType="com.eluolang.app.manage.vo.EllSkipContestVo">
+        select esc.id as contestId,
+        esc.con_title,
+        esc.con_matter,
+        esc.con_pattern,
+        esc.con_content,
+        esc.con_state,
+        esc.con_begin_time,
+        esc.con_end_time,
+        esc.reg_end_time,
+        esc.reg_begin_time,
+        esc.content_unit,
+        esc.prize,
+        esjc.state,
+        esjc.con_number
+        from ell_skip_contest esc
+        left join ell_skip_join_contest esjc on
+        esjc.con_test_id = esc.id and esjc.skip_user_id=#{ellSkipContestVo.skipUserId}
+        where
+        esc.is_delete=0
+        <if test="ellSkipContestVo.conState > 1 and 5>ellSkipContestVo.conState">
+            and esc.con_state =#{ellSkipContestVo.conState}
+        </if>
+        <if test=" ellSkipContestVo.conState>=5">
+            and esc.con_state >1
+        </if>
+        <if test="ellSkipContestVo.conTitle!=null and ellSkipContestVo.conTitle!=''">
+            and esc.con_title like concat('%',#{ellSkipContestVo.conTitle},'%')
+        </if>
+        <if test="ellSkipContestVo.state!=0">
+            and esjc.state=#{ellSkipContestVo.state}
+        </if>
+        <if test="ellSkipContestVo.isSelf !=0">
+            and esc.id= esjc.con_test_id
+        </if>
+        order by esc.create_time asc
+    </select>
+    <select id="findRanking" resultType="java.lang.Integer">
+        select count(esjc.id)
+        from ell_skip_join_contest esjc
+                 left join ell_skip_number esn on esjc.skip_num_id = esn.id
+        where esjc.con_test_id = #{conTestId}
+          and esn.skip_avg >= #{skipAvg}
+    </select>
+    <select id="findSkipAllNumAndTime" resultType="com.eluolang.app.manage.vo.EllSkipAllNumAndTime">
+        select sum(skip_num) as skipAllNum, sum(skip_time) as skipAllTime
+        from ell_skip_number
+        where skip_user_id = #{skipUserId}
+    </select>
+    <select id="findSkipRanking" resultType="com.eluolang.app.manage.vo.EllSkipRankingVo">
+        select esjc.state,
+        esjc.user_name,
+        esjc.age,
+        esjc.con_number,
+        esjc.skip_ranking,
+        fm.file_url as imgUrl,
+        (case
+        when esc.con_pattern = 2 then concat(esn.skip_num, '个')
+        when esc.con_pattern = 3 then concat(esn.skip_time, 's') END
+        ) as skipGrade
+        from ell_skip_join_contest esjc
+        left join ell_skip_user esu on esjc.skip_user_id = esu.user_id
+        left join file_mgr fm on esu.img_id = fm.id
+        left join ell_skip_number esn on esn.id = esjc.skip_num_id
+        left join ell_skip_contest esc on esc.id = esjc.con_test_id and esc.is_delete=0
+        where esjc.con_test_id = #{conTestId}
+        <if test="userId!=null and userId!=''">
+            and esjc.skip_user_id=#{userId}
+        </if>
+        group by esjc.id order by esjc.skip_ranking asc
+    </select>
+    <!--前10不包含自己-->
+    <!--    <select id="findSkipRanking" resultType="com.eluolang.app.manage.vo.EllSkipRankingVo">
+            select esjc.state,
+            esjc.user_name,
+            esjc.age,
+            esjc.con_number,
+            esjc.skip_ranking,
+            fm.file_url as imgUrl,
+            (case
+            when esc.con_pattern = 2 then concat(esn.skip_num, '个')
+            when esc.con_pattern = 3 then concat(esn.skip_time, 's') END
+            ) as skipGrade
+            from ell_skip_join_contest esjc
+            left join ell_skip_user esu on esjc.skip_user_id = esu.user_id
+            left join file_mgr fm on esu.img_id = fm.id
+            left join ell_skip_number esn on esn.id = esjc.skip_num_id
+            left join ell_skip_contest esc on esc.id = esjc.con_test_id
+            where esjc.con_test_id = #{conTestId}
+            <if test="userId!=null and userId!=''">
+                and esjc.skip_user_id=#{userId}
+            </if>
+            <if test="userId==null or userId==''">
+                and esjc.skip_user_id!=#{userId}
+            </if>
+            order by esjc.skip_ranking asc
+        </select>-->
+    <select id="findUserImgId" resultType="java.lang.String">
+        select file_img_id
+        from img_user_relevance
+        where user_id = #{userId}
+    </select>
+    <select id="findConContent" resultType="java.lang.Integer">
+        select con_content
+        from ell_skip_contest
+        where id = #{contestId}
+          and is_delete = 0
+    </select>
+    <select id="findNum" resultType="java.lang.Integer">
+        select name
+        from sys_data_dictionary
+        where type = 3
+    </select>
+    <select id="findHomework" resultType="com.eluolang.app.manage.vo.EllSkipHomeworkVo">
+        select esh.id,
+        esh.create_by,
+        esh.work_name,
+        esh.work_place,
+        esh.work_pattern,
+        esh.work_setting,
+        esh.teacher_name,
+        esh.use_org_id as useOrgId,
+        If(esn.id is NULL or esn.id='',0,1 ) as isFinish
+        from ell_skip_homework esh
+        left join pf_depart pd on pd.id=esh.use_org_id
+        left join ell_user eu on eu.id=#{ellSkipHomeworkVo.userId} and eu.is_delete=0
+        left join ell_skip_number esn on esn.is_homework=1 and esn.homework_id=esh.id and eu.id=esn.skip_user_id
+        where esh.state!=1
+        <if test="ellSkipHomeworkVo.id!=null and ellSkipHomeworkVo.id!=''">
+            and esh.id=#{ellSkipHomeworkVo.id}
+        </if>
+        <if test="ellSkipHomeworkVo.workName!=null and ellSkipHomeworkVo.workName!=''">
+            and esh.work_name like concat('%',#{ellSkipHomeworkVo.workName},'%')
+        </if>
+        <if test="ellSkipHomeworkVo.teacherName!=null and ellSkipHomeworkVo.teacherName!=''">
+            and esh.teacher_name like concat('%',#{ellSkipHomeworkVo.teacherName},'%')
+        </if>
+        <if test="ellSkipHomeworkVo.useOrgId!=null and ellSkipHomeworkVo.useOrgId!=''">
+            and esh.use_org_id like concat('%',#{ellSkipHomeworkVo.userOrgId},'%')
+        </if>
+        <if test="ellSkipHomeworkVo.workPattern!=null and ellSkipHomeworkVo.workPattern!=''">
+            and esh.work_pattern=#{ellSkipHomeworkVo.workPattern}
+        </if>
+        <if test="ellSkipHomeworkVo.state!=null and ellSkipHomeworkVo.state>1">
+            and esh.state=#{ellSkipHomeworkVo.state}
+        </if>
+        <if test="ellSkipHomeworkVo.userId!=null and ellSkipHomeworkVo.userId!=''">
+            and esh.use_org_id like concat('%',eu.org_id ,'%')
+        </if>
+        group by esh.id
+    </select>
+</mapper>

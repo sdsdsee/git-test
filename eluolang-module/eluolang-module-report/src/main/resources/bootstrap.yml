@@ -1,0 +1,25 @@
+server:
+  port: 8091
+#项目的名称
+spring:
+  application:
+    name: ELL-report
+  profiles:
+    active: dev
+  #nacos配置
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+        # 配置文件格式
+        file-extension: yml
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+        # 共享配置
+        shared-dataids: application.${spring.cloud.nacos.config.file-extension}

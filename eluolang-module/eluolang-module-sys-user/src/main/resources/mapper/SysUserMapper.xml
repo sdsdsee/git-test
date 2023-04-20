@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.module.sys.user.mapper.SysUserMapper">
+
+    <select id="verifyUsernameRepeat" resultType="int">
+        select count(1) from sys_user where `name`=#{name} and state=1
+    </select>
+
+    <select id="isLogoutAddUserName" resultType="int">
+        select count(1) from sys_user where `name`=#{name} and state=0
+    </select>
+
+    <update id="modifyLogoutUser">
+        update sys_user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="realName!=null and realName!=''">
+                real_name=#{realName},
+            </if>
+            <if test="pwd!=null and pwd!=''">
+                pwd=#{pwd},
+            </if>
+                phone=#{phone},
+            <if test="email!=null and email!=''">
+                email=#{email},
+            </if>
+                reg_time=now(),
+            <if test="state!=null and state!=''">
+                state=#{state},
+            </if>
+                logout_time=null,
+        </trim>
+        where `name`=#{name}
+    </update>
+
+    <select id="getLogoutUser" resultType="Integer">
+        select id from sys_user where `name`=#{name} and state=0
+    </select>
+
+    <delete id="deleteBindCameraUser">
+        delete from user_camera where user_id=#{id}
+    </delete>
+
+    <select id="emailValidateTime" resultType="String">
+        select `value` from config where `name`='emailTime'
+    </select>
+
+    <select id="getCode" resultType="int">
+        SELECT count(1) from pf_operator where opt_name=#{name} and email=#{email} and status=0
+    </select>
+
+    <update id="modifyPwd">
+        UPDATE pf_operator set psw=#{newPwd} , updated_time = NOW() where opt_name=#{name} and status=0
+    </update>
+
+    <select id="selectUserPwd" resultType="int">
+        select count(1) from pf_operator where opt_name=#{name} and psw=#{oldPwd} and status=0
+    </select>
+
+    <select id="selectUser" resultType="com.eluolang.common.core.pojo.PfOperator">
+        SELECT *
+        from pf_operator where path like concat('%',#{path},'%')
+        group by id
+        order by created_time desc
+    </select>
+
+    <select id="getAllUserId" resultType="Integer">
+        select u.id
+        from sys_user u
+        left join sys_user_role ur on u.id=ur.sys_id
+        left join sys_role r on r.role_id=ur.role_id
+        where state in(1,2)
+        <if test="realUserName!=null and realUserName!=''">
+            and concat(`name`,real_name) like concat('%',#{realUserName},'%')
+        </if>
+        <if test="roleId!=null and roleId!=''">
+            and r.role_id =#{roleId}
+        </if>
+        group by u.id
+        order by reg_time desc
+    </select>
+
+
+    <delete id="deleteUserRole">
+        delete from sys_user_role where sys_id=#{id}
+    </delete>
+
+    <insert id="addUserRole">
+        insert into sys_user_role(sys_id,role_id) values(#{id},#{roleId})
+    </insert>
+
+    <select id="getPersonalInfo" resultType="com.eluolang.module.sys.user.model.PfOperatorVo">
+        select * from pf_operator where id=#{id}
+    </select>
+
+    <update id="modifyPersonalInfo">
+        update pf_operator
+        <trim prefix="set" suffixOverrides=",">
+            <if test="realName!=null and realName!=''">
+                nickname=#{realName},
+            </if>
+                phone=#{phone},
+            <if test="email!=null and email!=''">
+                email=#{email},
+            </if>
+        </trim>
+        where id=#{id} and status=0
+    </update>
+
+
+    <update id="modifyUserState">
+        update pf_operator set status=#{state} where id=#{id}
+    </update>
+
+    <select id="getRealNameByName" resultType="com.eluolang.common.core.pojo.PfOperator">
+        select nickname from pf_operator where opt_name=#{name}
+    </select>
+
+    <select id="isBindingMemorandum" resultType="Integer">
+        select count(1) from memorandum where user_id=#{id}
+    </select>
+
+    <delete id="delUserMemorandum">
+        delete from memorandum where user_id=#{id}
+    </delete>
+
+    <update id="modifyBgmUrl">
+        update sys_user
+        <trim prefix="set" suffixOverrides=",">
+            <if test="backgroundUrl!=null and backgroundUrl!=''">
+                background_url=#{backgroundUrl},
+            </if>
+            <if test="partBackgroundUrl!=null and partBackgroundUrl!=''">
+                part_background_url=#{partBackgroundUrl},
+            </if>
+        </trim>
+        where id=#{id}
+    </update>
+
+    <delete id="noDeleteUser">
+        delete from sys_user where id not in(#{noId})
+    </delete>
+
+    <select id="selPfMenuById" resultType="com.eluolang.common.core.pojo.PfMenu">
+        <if test="id == 1 or id == 2">
+            select * from pf_menu order by id
+        </if>
+        <if test="id != 1 and id != 2">
+            select * from pf_menu where id in (select rat FROM pf_operator_rat where opt_id = #{id} and `module` = 1 ) order by id
+        </if>
+    </select>
+
+    <select id="selPfDepartById" resultType="com.eluolang.common.core.pojo.PfDepart">
+        <if test="id == 1 or id == 2">
+            select * from pf_depart order by id
+        </if>
+        <if test="id != 1 and id != 2">
+            select * from pf_depart where id in (select rat FROM pf_operator_rat where opt_id = #{id} and `module` = 2) order by id
+        </if>
+    </select>
+
+    <select id="selDepartByOptId" resultType="com.eluolang.module.sys.user.vo.DepartVo">
+        <if test="id == 1 or id == 2">
+            select * from pf_depart order by id
+        </if>
+        <if test="id != 1 and id != 2">
+            select * from pf_depart where id in (select rat FROM pf_operator_rat where opt_id = #{id} and `module` = 2) order by id
+        </if>
+    </select>
+
+    <insert id="addPfOperator" useGeneratedKeys="true" keyProperty="id">
+        insert into pf_operator(parent_id,opt_name,nickname,psw,phone,email,path,created_time,status,file_id,opt_type)
+         values (#{parentId},#{optName},#{nickname},#{psw},#{phone},#{email},#{path},NOW(),0,#{fileId},#{optType})
+    </insert>
+
+    <select id="pfOperatorIsExist" resultType="java.lang.Integer">
+        select count(1) from pf_operator where opt_name = #{optName}
+    </select>
+
+    <insert id="addPfOperatorRat">
+        insert into pf_operator_rat (id,opt_id,`module`,rat) values
+        <foreach collection="pfOperatorRatList" item="item" index="index" separator=",">
+            (#{item.id},#{item.optId},#{item.module},#{item.rat})
+        </foreach>
+    </insert>
+
+    <update id="updatePfOperator">
+        update pf_operator set nickname=#{nickname},
+        <if test="psw != null and psw != ''">
+            psw=#{psw},
+        </if>
+        <if test="fileId != null and fileId != ''">
+            file_id=#{fileId},
+        </if>
+        phone=#{phone},email=#{email},opt_type=#{optType} where id = #{id}
+    </update>
+
+    <delete id="delPfOperatorRat">
+        delete from pf_operator_rat where opt_id = #{optId}
+    </delete>
+
+    <delete id="delPfOperator">
+        delete from pf_operator where id = #{optId}
+    </delete>
+
+    <select id="selPfOperatorByParentId"  resultType="Integer">
+        select count(*) from pf_operator where parent_id = #{optId}
+    </select>
+
+    <select id="selPfOperatorByPath" resultType="com.eluolang.common.core.pojo.PfOperator">
+        SELECT * from pf_operator where path = #{path}
+    </select>
+
+    <select id="selPfOperatorByPhone" resultType="com.eluolang.common.core.pojo.PfOperator">
+        SELECT * from pf_operator where phone = #{phone}
+    </select>
+
+    <select id="selSysDataDictionaryByType" resultType="com.eluolang.common.core.pojo.SysDataDictionary">
+        select * from sys_data_dictionary where `type` = #{type}
+    </select>
+
+    <insert id="addSysDataDictionary">
+        insert into sys_data_dictionary(`name`,`type`) values (#{name},#{type})
+    </insert>
+
+    <select id="selSysDataDictionaryIsExist" resultType="Integer">
+        select count(1) from sys_data_dictionary where `name` = #{name} and `type` = #{type}
+    </select>
+
+    <update id="updateSysDataDictionary">
+        update sys_data_dictionary set `name` = #{name},`type` = #{type} where id = #{id}
+    </update>
+
+    <delete id="delSysDataDictionary">
+        delete from sys_data_dictionary where id = #{id}
+    </delete>
+
+    <!--将上传的文件信息进行保存入库-->
+    <insert id="saveFileInfo" parameterType="com.eluolang.common.core.pojo.FileMgr">
+		insert into file_mgr
+		values
+		(#{id},#{uploadTime},#{type},#{fileUrl},#{thumbnailUrl},#{size},#{fileName})
+	</insert>
+
+    <!--根据文件id查询文件信息-->
+    <select id="getFileInfo" resultType="com.eluolang.common.core.pojo.FileMgr">
+        SELECT * FROM file_mgr
+        WHERE id = #{fileId}
+    </select>
+</mapper>

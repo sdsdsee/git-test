@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.app.manage.mapper.AppUserMapper">
+    <insert id="addAppointmentState">
+        insert into ell_plan_user(id, plan_id, user_id, sub_date_id, is_delete, day_time, create_time, state, is_last)
+        values (#{ellPlanUser.id}, #{ellPlanUser.planId}, #{ellPlanUser.userId}, #{ellPlanUser.subDateId},
+                0, #{ellPlanUser.dayTime}, #{ellPlanUser.createTime}, #{ellPlanUser.state},
+                #{ellPlanUser.isLast})
+    </insert>
+    <update id="updateUserWxOpenId">
+        update ell_user
+        set wx_open_id=#{wxOpenId}
+        where id = #{userId}
+          and (wx_open_id is null or wx_open_id = '')
+          and is_delete = 0
+    </update>
+    <update id="relieveUserWx">
+        UPDATE ell_user
+        set wx_open_id = null
+        where id = #{userId}
+    </update>
+    <update id="updateAppointment">
+        update ell_plan_user set
+        is_delete=0
+        <if test="ellPlanUser.subDateId!=null and ellPlanUser.subDateId!=''">
+            ,sub_date_id=#{ellPlanUser.subDateId}
+        </if>
+        <if test="ellPlanUser.dayTime!=null and ellPlanUser.dayTime!=''">
+            ,day_time=#{ellPlanUser.dayTime}
+        </if>
+        <if test="ellPlanUser.state!=0">
+            ,state=#{ellPlanUser.state}
+        </if>
+        <if test="ellPlanUser.isLast!=null and ellPlanUser.isLast!=''">
+            ,is_last=#{ellPlanUser.isLast}
+        </if>
+        where user_id=#{ellPlanUser.userId} and plan_id=#{ellPlanUser.planId} and is_last=1
+    </update>
+
+    <select id="findUser" resultType="com.eluolang.app.manage.dto.EllUserVo">
+        select a.id,
+               ese.id_card_symmetry as idCard,
+               a.user_name,
+               a.wx_open_id,
+               a.student_id,
+               a.student_code,
+               a.home_address,
+               a.en_time,
+               a.source_code,
+               a.phone,
+               a.en_grade,
+               sys.name             as ethnic,
+               pf.dept_name         as className,
+               fi.file_url          as imageUrl,
+               a.app_height,
+               a.app_weight,
+               a.org_id
+        from ell_user a
+                 left join ell_symmetrical_encryption ese on a.id = ese.user_id
+                 left join sys_data_dictionary sys on sys.id = a.ethnic
+                 left join pf_depart pf on a.org_id = pf.id
+                 left join img_user_relevance re on re.user_id = a.id
+                 left join file_mgr fi on fi.id = re.file_img_id
+        where a.wx_open_id = #{openId}
+          and a.is_delete = 0
+    </select>
+    <select id="findUserById" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where id = #{userId}
+          and is_delete = 0
+    </select>
+    <select id="findUserIdByIdentification" resultType="java.lang.String">
+        select user_id
+        from ell_user_identification
+        where identification = #{identification}
+    </select>
+    <select id="findUserSchoolName" resultType="java.lang.String">
+        SELECT dept_name
+        FROM pf_depart
+        WHERE is_school = 1
+          AND (SELECT path FROM pf_depart WHERE id = #{orgId}) LIKE Concat(path, '%')
+
+    </select>
+    <select id="findTimeAppointment" resultType="com.eluolang.app.manage.vo.EllTestAppointmentVo">
+        select etp.*, ep.date_begin, ep.date_end
+        from ell_test_appointment etp
+                 left join ell_plan ep on ep.id = #{planId}
+        where etp.plan_id = #{planId}
+    </select>
+    <select id="findPlan" resultType="com.eluolang.app.manage.vo.EllOrderPlanVo">
+        select ep.*, epu.state, eat.state as avoidState
+        from ell_plan ep
+                 left join ell_use_plan_department eupd on ep.id = eupd.plan_id
+                 left join ell_user eu on eu.id = #{userId} and eu.is_delete = 0
+                 left join ell_plan_user epu on epu.user_id = #{userId} and epu.plan_id = ep.id
+                 left join ell_avoid_test eat on eat.user_id = #{userId} and eat.plan_id = eupd.plan_id
+        where eu.org_id = eupd.org_id
+          and ep.is_subscribe = 1
+          and ep.plan_state = 2
+          and ep.is_delete = 0
+          and ep.is_exam = 2
+    </select>
+    <select id="findTimeAppointmentNum" resultType="com.eluolang.app.manage.vo.EllTestAppointmentVo">
+        SELECT etp.*, ep.date_begin, ep.date_end, COUNT(epu.id) as reservationNum, epu.day_time
+        FROM ell_plan_user epu
+                 LEFT JOIN ell_test_appointment etp on etp.plan_id = #{planId} and epu.sub_date_id = etp.id
+                 left join ell_plan ep on ep.id = #{planId}
+        WHERE epu.day_time = #{timeDay}
+          and epu.is_delete = 0
+          and epu.plan_id = ep.id
+        GROUP BY etp.id
+    </select>
+    <select id="findHistory" resultType="com.eluolang.app.manage.vo.EllTestHistoryVo">
+        select eth.*, etp.synopsis, ppc.pro_name
+        from plan_project_chance ppc
+                 left join ell_plan_user epu
+                           on epu.user_id = #{userId} and epu.is_last = 1
+                 left join ell_test_history eth
+                           on eth.plan_id = epu.plan_id and eth.user_id = epu.user_id and eth.test_project = ppc.pro_id
+                 left join ell_test_project etp on etp.id = ppc.pro_id
+        where ppc.plan_id = epu.plan_id
+    </select>
+    <select id="findAppointmentAllNum" resultType="java.lang.Integer">
+        select count(user_id)
+        from ell_plan_user
+        where plan_id = #{planId}
+    </select>
+    <select id="isHasAccomplishPlan" resultType="java.lang.Integer">
+        select count(user_id)
+        from ell_plan_user
+        where is_last = 1
+          and user_id = #{userId}
+          and state = 1
+    </select>
+    <select id="findIsHasEndScore" resultType="java.lang.Integer">
+        select count(user_id)
+        from ell_plan_end_score
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+    <select id="findPlanByUserOrgId" resultType="com.eluolang.app.manage.vo.EllPlanVo">
+        select ep.*
+        from ell_plan ep
+        left join ell_user eu on eu.id = #{userId} and eu.is_delete=0
+        left join ell_use_plan_department eupd on eu.org_id = eupd.org_id
+        where ep.is_delete=0 and ep.id=eupd.plan_id and ep.is_exam=#{isExam}
+        <if test="isExam==2">
+            and ep.is_subscribe=2 or ep.id=(select plan_id from ell_plan_user where user_id=#{userId})
+        </if>
+        GROUP BY ep.id
+    </select>
+    <select id="findUserHistory" resultType="com.eluolang.app.manage.vo.EllUserPlanHistoryVo">
+        select eth.*, etp.synopsis, fm.file_url as iconUrl, eth.test_project as proId
+        from ell_test_history eth
+                 left join ell_plan ep on ep.id = #{planId} and ep.is_view = 1
+                 left join ell_test_project etp on etp.id = eth.test_project
+                 left join file_mgr fm on etp.pro_icon = fm.id
+                 left join plan_project_chance ppc on ppc.plan_id = ep.id
+        where eth.plan_id = ep.id
+          and eth.user_id = #{userId}
+          and eth.test_project = ppc.pro_id
+    </select>
+    <select id="findPlanEndScore" resultType="com.eluolang.app.manage.vo.EllPlanEndScoreVo">
+        select end_score as planEndScore, end_comment as endComment
+        from ell_plan_end_score
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+    <select id="findYetOrderPeopleNumber" resultType="com.eluolang.app.manage.vo.EllSubscribeNumVo">
+        select count(epu.id), eta.num
+        from ell_plan_user epu
+                 left join ell_test_appointment eta on eta.plan_id = #{planId} and eta.id = #{subDateId}
+        where epu.sub_date_id = #{subDateId}
+          and epu.day_time = #{dayTime}
+          and epu.plan_id = #{planId}
+    </select>
+    <select id="findCanOderHavePeopleNumber" resultType="java.lang.Integer">
+        select num
+        from ell_test_appointment
+        where id = #{subDateId}
+          and plan_id = #{planId}
+    </select>
+    <select id="selPlanNum" resultType="java.lang.Integer">
+        SELECT IFNULL(COUNT(id), 0)
+        from ell_user
+        WHERE org_id IN (select org_id from ell_use_plan_department where plan_id = #{planId})
+          and is_delete = 0
+    </select>
+    <select id="selUserPfDepart" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select *
+        from pf_depart
+        where path like concat((select path
+                                from pf_depart
+                                where (select path from pf_depart where id = #{orgId}) like concat(path, '%')
+                                  and is_school = 1), '%')
+    </select>
+</mapper>

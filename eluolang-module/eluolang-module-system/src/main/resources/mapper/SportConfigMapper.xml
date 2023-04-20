@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//drs" "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.system.mapper.SportConfigMapper">
+    <!--新增运动指南配置-->
+    <insert id="insertSportConfig">
+        insert into ell_sport_config(id,`name`,pro_ids,create_time,is_delete)
+        values (#{id},#{name},#{proIds},NOW(),0)
+    </insert>
+
+    <!--新增运动指南配置规则-->
+    <insert id="insertSportConfigRule">
+        insert into ell_sport_config_rule(id,is_delete,sex,comment,guide,create_time,pro_id,sport_config_id)
+        values (#{id},0,#{sex},#{comment},#{guide},NOW(),#{proId},#{sportConfigId})
+    </insert>
+
+    <!--删除运动指南配置-->
+    <update id="deleteSportConfig">
+        update ell_sport_config set is_delete=1 where id=#{id}
+    </update>
+
+    <!--修改运动指南配置-->
+    <update id="updateSportConfig">
+        update ell_sport_config
+        <trim prefix="set" suffixOverrides=",">
+            <if test="name != null and name != ''">
+                name=#{name},
+            </if>
+            <if test="proIds != null and proIds != ''">
+                pro_ids=#{proIds},
+            </if>
+        </trim>
+        where id=#{id} and is_delete=0
+    </update>
+
+    <!--删除运动指南配置规则-->
+    <update id="deleteSportConfigRule">
+        update ell_sport_config_rule set is_delete=1 where id=#{id}
+    </update>
+
+    <!--修改运动指南配置规则-->
+    <update id="updateSportConfigRule">
+        update ell_sport_config_rule
+        <trim prefix="set" suffixOverrides=",">
+            <if test="sex != null and sex != ''">
+                sex=#{sex},
+            </if>
+            <if test="comment != null and comment != ''">
+                comment=#{comment},
+            </if>
+            <if test="guide != null and guide != ''">
+                guide=#{guide},
+            </if>
+        </trim>
+        where id=#{id} and is_delete=0
+    </update>
+
+    <!--查询所有运动指南配置-->
+    <select id="selAllSportConfig" resultType="com.eluolang.system.vo.EllSportConfigVo">
+        select * from ell_sport_config where is_delete = 0
+    </select>
+
+    <!--按条件查询运动指南配置规则-->
+    <select id="selSportConfigRule" resultType="com.eluolang.system.vo.EllSportConfigRuleVo">
+        select * from ell_sport_config_rule
+        <where>
+             is_delete = 0 and sport_config_id = #{sportConfigId}
+            <if test="proId != null and proId != ''">
+                and pro_id=#{proId}
+            </if>
+            <if test="sex != null and sex != ''">
+                and sex = #{sex}
+            </if>
+            <if test="comment != null and comment != ''">
+                and comment like concat('%',#{comment},'%')
+            </if>
+        </where>
+    </select>
+
+    <select id="selSportConfigRuleById" resultType="com.eluolang.system.vo.EllSportConfigRuleVo">
+        select * from ell_sport_config_rule where id = #{id} and is_delete = 0
+    </select>
+</mapper>

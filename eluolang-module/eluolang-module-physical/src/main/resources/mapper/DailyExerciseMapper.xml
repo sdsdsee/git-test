@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.DailyExerciseMapper">
+
+    <insert id="addDailyPlan">
+        insert into ell_daily_exercise_plan(id, train_name, first_half_year, second_half_year, first_train_mileage,
+                                            second_train_mileage, remarks, create_time, use_orgId, `type`, is_delete,
+                                            status, first_weeks, second_weeks, first_month, second_month, text_content)
+        values (#{ellDailyExercisePlan.id}, #{ellDailyExercisePlan.trainName}, #{ellDailyExercisePlan.firstHalfYear},
+                #{ellDailyExercisePlan.secondHalfYear}, #{ellDailyExercisePlan.firstTrainMileage},
+                #{ellDailyExercisePlan.secondTrainMileage}, #{ellDailyExercisePlan.remarks},
+                #{ellDailyExercisePlan.createTime}, #{ellDailyExercisePlan.useOrgId}, #{ellDailyExercisePlan.type},
+                0, 1, #{ellDailyExercisePlan.firstWeeks},
+                #{ellDailyExercisePlan.secondWeeks}, #{ellDailyExercisePlan.firstMonth},
+                #{ellDailyExercisePlan.secondMonth}, #{ellDailyExercisePlan.textContent})
+    </insert>
+    <insert id="addDailyTime">
+        insert
+        into ell_daily_time_quantum(id,start_hour,end_hour,daily_id,time_type) values
+        <foreach collection="ellDailyTimeQuantumList" item="item" index="index" separator=",">
+            (
+            #{item.id},
+            #{item.startHour},
+            #{item.endHour},
+            #{dailyId},
+            #{item.timeType}
+            )
+        </foreach>
+
+    </insert>
+    <insert id="addPlanUseDp">
+        insert into ell_daily_plan_use_depart(id,daily_plan_id,org_id)
+        values
+        <foreach collection="pfDepartList" item="entity" separator=",">
+            (#{entity.id},#{dailyId},#{entity.orgId})
+        </foreach>
+    </insert>
+    <update id="updataDailyPlan">
+        update ell_daily_exercise_plan
+        <set>
+            <if test="ellDailyExercisePlan.id != null and ellDailyExercisePlan.id != ''">
+                id = #{ellDailyExercisePlan.id},
+            </if>
+            <if test="ellDailyExercisePlan.trainName != null and ellDailyExercisePlan.trainName != ''">
+                train_name = #{ellDailyExercisePlan.trainName},
+            </if>
+            <if test="ellDailyExercisePlan.firstHalfYear != null and ellDailyExercisePlan.firstHalfYear != ''">
+                first_half_year = #{ellDailyExercisePlan.firstHalfYear},
+            </if>
+            <if test="ellDailyExercisePlan.secondHalfYear != null and ellDailyExercisePlan.secondHalfYear != ''">
+                second_half_year = #{ellDailyExercisePlan.secondHalfYear},
+            </if>
+            <if test="ellDailyExercisePlan.firstTrainMileage >-1">
+                first_train_mileage = #{ellDailyExercisePlan.firstTrainMileage},
+            </if>
+            <if test="ellDailyExercisePlan.secondTrainMileage >-1">
+                second_train_mileage = #{ellDailyExercisePlan.secondTrainMileage},
+            </if>
+            <if test="ellDailyExercisePlan.remarks != null and ellDailyExercisePlan.remarks != ''">
+                remarks = #{ellDailyExercisePlan.remarks},
+            </if>
+            <if test="ellDailyExercisePlan.createTime != null and ellDailyExercisePlan.createTime != ''">
+                create_time = #{ellDailyExercisePlan.createTime},
+            </if>
+            <if test="ellDailyExercisePlan.useOrgId != null and ellDailyExercisePlan.useOrgId != ''">
+                use_orgId = #{ellDailyExercisePlan.useOrgId},
+            </if>
+            <if test="ellDailyExercisePlan.type != null and ellDailyExercisePlan.type != ''">
+                type = #{ellDailyExercisePlan.type},
+            </if>
+            <if test="ellDailyExercisePlan.firstWeeks >-1">
+                first_weeks = #{ellDailyExercisePlan.firstWeeks},
+            </if>
+            <if test="ellDailyExercisePlan.secondWeeks >-1">
+                second_weeks = #{ellDailyExercisePlan.secondWeeks},
+            </if>
+            <if test="ellDailyExercisePlan.firstMonth >-1">
+                first_month = #{ellDailyExercisePlan.firstMonth},
+            </if>
+            <if test="ellDailyExercisePlan.secondMonth>-1">
+                second_month = #{ellDailyExercisePlan.secondMonth},
+            </if>
+            <if test="ellDailyExercisePlan.textContent != null and ellDailyExercisePlan.textContent != ''">
+                text_content = #{ellDailyExercisePlan.textContent},
+            </if>
+            <if test="ellDailyExercisePlan.runTimeDisplay != null and ellDailyExercisePlan.runTimeDisplay != ''">
+                run_time_display = #{ellDailyExercisePlan.runTimeDisplay},
+            </if>
+        </set>
+        where id = #{ellDailyExercisePlan.id}
+    </update>
+    <delete id="delPlanTime">
+        delete
+        from ell_daily_time_quantum
+        where daily_id = #{dailyId}
+    </delete>
+    <delete id="delPlanUseDp">
+        delete
+        from ell_daily_plan_use_depart
+        where daily_plan_id = #{dailyId}
+    </delete>
+    <select id="selDailPlan" resultType="com.eluolang.common.core.pojo.EllDailyExercisePlan">
+        select *
+        from ell_daily_exercise_plan
+        where ((#{ellDailyExercisePlan.trainStartTime} >= train_start_time and
+                train_end_time >= #{ellDailyExercisePlan.trainStartTime})
+            or (#{ellDailyExercisePlan.trainEndTime} >= train_start_time and
+                train_end_time >= #{ellDailyExercisePlan.trainEndTime})
+            or (train_start_time >= #{ellDailyExercisePlan.trainStartTime} and
+                #{ellDailyExercisePlan.trainEndTime} >= train_end_time))
+          and id!=#{ellDailyExercisePlan.id}
+        GROUP BY id
+    </select>
+    <select id="selDailyExercisePlanByName" resultType="com.eluolang.physical.model.EllDailyExercisePlanVo">
+        select edep.*
+        from ell_daily_exercise_plan edep
+        where edep.is_delete = 0 and status=1
+        <if test="orgId!=null and orgId!=''">
+            and (#{orgId} in (select id from pf_depart where path like concat((select path from pf_depart where
+            id=edep.use_orgId),'%')))
+        </if>
+        <if test="account!=0 and account !=1">
+            and edep.use_orgId in (select rat from pf_operator_rat where opt_id=#{account} and module=2)
+        </if>
+        group BY edep.id
+        order by edep.create_time desc
+    </select>
+    <select id="selPlanAllDepart" resultType="com.eluolang.physical.dto.DailyPlanUseDepartDto">
+        select id as orgId
+        from pf_depart
+        where path like concat((select path from pf_depart where id = #{orgId}), '%')
+        <if test="account==0 and account==1">and id in (select id from pf_operator_rat where opt_id = #{account} and
+            module =2)
+        </if>
+        and last_level=1
+    </select>
+    <select id="selPlanUseDp" resultType="com.eluolang.common.core.pojo.EllDailyPlanUseDepart">
+        select *
+        from ell_daily_plan_use_depart
+        where daily_plan_id = #{dailyId}
+        <if test="orgId!=null and orgId!=''">and org_id = #{orgId}</if>
+    </select>
+    <select id="selUseTime" resultType="com.eluolang.common.core.pojo.EllDailyTimeQuantum">
+        select *
+        from ell_daily_time_quantum
+        where daily_id = #{dailyId}
+        <if test="timeType!=0">
+            and time_type=#{timeType}
+        </if>
+    </select>
+    <select id="selDailyNum" resultType="java.lang.Integer">
+        select count(DISTINCT id)
+        from ell_user
+        where
+        is_delete=0
+        <if test="ellSelDailyDetailsVo.account!=0 and ellSelDailyDetailsVo.account!=1">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{ellSelDailyDetailsVo.account} and module =2)
+        </if>
+        <if test="ellSelDailyDetailsVo.orgId!=null and ellSelDailyDetailsVo.orgId!=''">
+            and org_id in (select id from pf_depart where path like concat((select path from pf_depart where
+            id=#{ellSelDailyDetailsVo.orgId}),'%'))
+        </if>
+        <if test="sex!=null and sex!=''">
+            and user_sex=#{sex}
+        </if>
+    </select>
+    <select id="selRankHistory" resultType="com.eluolang.physical.dto.EllDailyRunRankDto">
+        select IFNULL(sum(edh.mileage), 0) as mileage, eu.user_name, eu.id as userId
+        from ell_user eu
+        LEFT JOIN ell_daily_exercise_plan edep on edep.id = #{ellSelDailyDetailsVo.dailyId}
+        left join ell_daily_history edh on edh.daily_id = #{ellSelDailyDetailsVo.dailyId} and edh.user_id = eu.id
+        where eu.is_delete = 0
+        <if test="ellSelDailyDetailsVo.account!=0 and ellSelDailyDetailsVo.account!=1">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{ellSelDailyDetailsVo.account} and module =2)
+        </if>
+        <if test="ellSelDailyDetailsVo.orgId!=null and ellSelDailyDetailsVo.orgId!=''">
+            and org_id in (select id from pf_depart where path like concat((select path from pf_depart where
+            id=#{ellSelDailyDetailsVo.orgId}),'%'))
+        </if>
+        group by eu.id
+        order by IFNULL(sum(edh.mileage), 0) desc,eu.id desc
+    </select>
+    <select id="selNotQualifiedHistoryRank" resultType="com.eluolang.physical.dto.EllDailyRunRankDto">
+        select IFNULL(sum(edh.mileage), 0)as mileage, eu.user_name, eu.id as userId
+        from ell_user eu
+        left join ell_daily_history edh on edh.daily_id = #{ellSelDailyDetailsVo.dailyId} and edh.user_id = eu.id
+        LEFT JOIN ell_daily_exercise_plan edep on edep.id = #{ellSelDailyDetailsVo.dailyId}
+        where
+        eu.is_delete = 0
+
+        <if test="type==1">
+            and edep.first_train_mileage >= (select IFNULL(sum(mileage), 0)from ell_daily_history where daily_id =
+            #{ellSelDailyDetailsVo.dailyId} and user_id = eu.id and #{startTime}>=edh.location_time and
+            edh.location_time> #{endTime})
+        </if>
+        <if test="type==2">
+            and edep.second_train_mileage >= (select IFNULL(sum(mileage), 0)from ell_daily_history where daily_id =
+            #{ellSelDailyDetailsVo.dailyId} and user_id = eu.id and #{startTime}>=edh.location_time and
+            edh.location_time> #{endTime})
+        </if>
+        <if test="ellSelDailyDetailsVo.account!=0 and ellSelDailyDetailsVo.account!=1">
+            and org_id in (select rat from pf_operator_rat where opt_id = #{ellSelDailyDetailsVo.account} and module =2)
+        </if>
+        <if test="ellSelDailyDetailsVo.orgId!=null and ellSelDailyDetailsVo.orgId!=''">
+            and org_id in (select id from pf_depart where path like concat((select path from pf_depart where
+            id=#{ellSelDailyDetailsVo.orgId}),'%'))
+        </if>
+        group by eu.id
+        order by sum(edh.mileage) desc ,eu.id asc
+    </select>
+    <select id="selTimeNum" resultType="java.lang.Integer">
+        select count(edh.user_id) as num
+        from ell_daily_history edh
+                 left join ell_user eu
+                           on eu.org_id in (select rat from pf_operator_rat where opt_id = #{account} and module =2)
+        where edh.location_time >= #{startTime}
+          and #{endTime} >= edh.location_time
+          and edh.daily_id = #{dailyId}
+    </select>
+    <select id="selMonthNum" resultType="java.lang.Integer">
+        select count(DISTINCT eu.id)
+        from ell_user eu
+        left join ell_daily_history edh on edh.user_id = eu.id and edh.daily_id=#{dailyId}
+        left join ell_daily_exercise_plan edep on edep.id=#{dailyId}
+        where
+        eu.is_delete = 0
+        <if test="sex!=null and sex !=''">
+            and eu.user_sex=#{sex}
+        </if>
+        <if test="account!=1 and account!=0">
+            and eu.org_id in (select rat from pf_operator_rat where opt_id=#{account} and module=2)
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and eu.org_id in(select id from pf_depart where path like concat((select path from pf_depart where
+            id=#{orgId}),'%'))
+        </if>
+        <if test="type!=0 and type==1">
+            and (SELECT IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and location_time >=
+            #{monthStart}
+            and #{monthEnd} >location_time)>=edep.first_month
+        </if>
+        <if test="type!=0 and type==2">
+            and (SELECT IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and location_time >=
+            #{monthStart}
+            and #{monthEnd} >location_time)>=edep.second_month
+        </if>
+        <if test="type!=0 and type==3">
+            and edep.first_month >=(SELECT IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and
+            location_time >=
+            #{monthStart}
+            and #{monthEnd} >location_time)
+        </if>
+        <if test="type!=0 and type==4">
+            and edep.second_month>=(SELECT IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and
+            location_time >=
+            #{monthStart}
+            and #{monthEnd} >location_time)
+        </if>
+    </select>
+    <select id="selUserTime" resultType="java.lang.Integer">
+        select IFNULL(sum(edh.mileage), 0)
+        from ell_daily_history edh
+                 left join ell_daily_exercise_plan edep on edep.id = #{dailyId}
+        where edh.daily_id = edep.id
+          and edh.location_time >= #{timeStart}
+          and #{timeEnd} > edh.location_time
+          and edh.user_id = #{userId}
+    </select>
+    <select id="selDailyById" resultType="com.eluolang.physical.model.EllDailyExercisePlanVo">
+        select *
+        from ell_daily_exercise_plan
+        where id = #{dailyId}
+    </select>
+    <!--    <select id="selUserRelevance" resultType="com.eluolang.common.core.pojo.ImgUserRelevance">
+            select iur.user_id,iur.file_img_id,iur.face_info
+            from img_user_relevance iur
+            left join ell_smart_device_management ed
+            on 1=1
+            where 1=1
+            <if test="deviceId!=null and deviceId!=''">and ed.device_id = #{deviceId}
+                and iur.user_id in (select id
+                from ell_user
+                where org_id in (select id
+                from pf_depart
+                where path like concat((select path from pf_depart where id = ed.dept_id)
+                , '%')))
+            </if>
+        </select>-->
+    <select id="selUserRelevance" resultType="com.eluolang.common.core.pojo.ImgUserRelevance">
+        select iur.user_id,iur.face_info
+        from img_user_relevance iur
+        left join ell_smart_device_management ed
+        on 1=1
+        where 1=1
+        <if test="deviceId!=null and deviceId!=''">and ed.device_id = #{deviceId}
+            and iur.user_id in (select id
+            from ell_user
+            where org_id in (select id
+            from pf_depart
+            where path like concat((select path from pf_depart where id = ed.dept_id)
+            , '%')))
+        </if>
+    </select>
+    <select id="selDailyTextContent" resultType="java.lang.String">
+        select text_content
+        from ell_daily_exercise_plan
+        where id = #{dailyId}
+    </select>
+    <select id="selUserRelevanceById" resultType="com.eluolang.common.core.pojo.ImgUserRelevance">
+        select user_id, face_info
+        from img_user_relevance
+        WHERE user_id = #{userId}
+    </select>
+    <select id="selOrgIdByDeviceId" resultType="java.lang.String">
+        SELECT dept_id
+        from ell_smart_device_management
+        where device_id = #{deviceId}
+    </select>
+    <select id="selDailyTextContentDeviceId" resultType="java.lang.String">
+        select edep.text_content
+        from ell_daily_exercise_plan edep
+                 left join ell_smart_device_management ed on ed.device_id = #{deviceId}
+        where edep.use_orgId in (select id from pf_depart where (select path from pf_depart where id = ed.dept_id) like
+              concat(path, '%')
+          and is_school = 1 )
+    </select>
+    <!-- <select id="selMonthNum" resultType="java.lang.Integer">
+         select count(DISTINCT eu.id)
+         from ell_user eu
+         left join   ell_daily_history edh on edh.user_id = eu.id        and edh.daily_id=#{dailyId}
+         left join ell_daily_exercise_plan edep on edep.id=#{dailyId}
+         where
+         eu.is_delete = 0
+         <if test="sex!=null and sex !=''">
+             and eu.user_sex=#{sex}
+         </if>
+         <if test="account!=1 and account!=0">
+             and eu.org_id in (select rat from pf_operator_rat where opt_id=#{account} and module=2)
+         </if>
+         <if test="orgId!=null and orgId!=''">
+             and eu.org_id in(select id from pf_depart where path like concat((select path from pf_depart where
+             id=#{orgId}),'%'))
+         </if>
+         <if test="type!=0 and type==1">
+             and (SELECT  IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and location_time >= #{monthStart}
+             and #{monthEnd} >location_time)>=edep.first_month
+         </if>
+         <if test="type!=0 and type==2">
+             and (SELECT  IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and location_time >= #{monthStart}
+             and #{monthEnd} >location_time)>=edep.second_month
+         </if>
+         <if test="type!=0 and type==3">
+             and edep.first_month >=(SELECT  IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and location_time >=
+             #{monthStart}
+             and #{monthEnd} >location_time)
+         </if>
+         <if test="type!=0 and type==4">
+             and edep.second_month>=(SELECT  IFNULL(sum(mileage),0) FROM ell_daily_history where user_id=edh.id and location_time >=
+             #{monthStart}
+             and #{monthEnd} >location_time)
+         </if>
+     </select>-->
+</mapper>

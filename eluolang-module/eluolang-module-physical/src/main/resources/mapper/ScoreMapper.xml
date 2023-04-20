@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.ScoreMapper">
+
+    <insert id="addStudentScoreMapper" parameterType="com.eluolang.common.core.pojo.EllTestHistory">
+        insert into
+        ell_test_history(id,user_id,plan_id,comment,create_by_device,create_by_examiner,create_time,update_time,tes_data,score,user_sex
+        <if test="ellHistoryVo.userGrade!=null and ellHistoryVo.userGrade!=''">
+            ,grade
+        </if>
+        ,org_id,test_project,project_name,is_delete,data,is_retest,extra_data,check_in_timestamp,end_timestamp,time_spent)
+        values(#{ellHistoryVo.id},#{ellHistoryVo.userId},#{ellHistoryVo.planId},#{ellHistoryVo.comment},
+        #{ellHistoryVo.createByDevice},#{ellHistoryVo.createByExaminer},#{ellHistoryVo.createTime},#{ellHistoryVo.createTime},
+        #{ellHistoryVo.testDataJson},#{ellHistoryVo.score},#{ellHistoryVo.userSex}
+        <if test="ellHistoryVo.userGrade!=null and ellHistoryVo.userGrade!=''">
+            ,#{ellHistoryVo.userGrade}
+        </if>
+        ,#{ellHistoryVo.userOrgId},#{ellHistoryVo.testProject},#{ellHistoryVo.projectName},0,#{ellHistoryVo.data},#{ellHistoryVo.isRetest}
+        ,#{ellHistoryVo.extraData},#{ellHistoryVo.checkInTimestamp},#{ellHistoryVo.endTimestamp},#{ellHistoryVo.timeSpent})
+    </insert>
+    <insert id="resultsVerify">
+        insert into ell_score_verify(id, plan_id, user_id, is_verify, signature_image_id, face_image_id)
+        values (#{id}, #{ellScoreVerifyVo.planId}, #{ellScoreVerifyVo.userId}, #{ellScoreVerifyVo.isVerify},
+                #{ellScoreVerifyVo.signatureImageId}, #{ellScoreVerifyVo.faceImageId})
+    </insert>
+    <insert id="resultsVerifyFacility">
+        insert into ell_score_verify(id, plan_id, user_id, is_verify, signature_imge_id, face_image_id)
+        values (#{id}, #{ellScoreVerifyVo.planId}, #{ellScoreVerifyVo.userId}, #{ellScoreVerifyVo.isVerify},
+                #{fileNameId}, #{fileFaceId})
+    </insert>
+    <insert id="addPlanEndScore">
+        insert into ell_plan_end_score(plan_id, user_id, end_score, end_comment)
+        values (#{planId}, #{userId}, #{endScore}, #{endComment})
+    </insert>
+    <insert id="addEyesight">
+        insert into ell_eyesight_particulars(id, plan_id, user_id, vision_comment, left_vision, right_vision,
+                                             left_diopter_sph, right_diopter_sph, left_diopter_cyl,
+                                             right_diopter_cyl, left_diopter_ax, right_diopter_ax, left_diopter_correct,
+                                             right_diopter_correct, left_corneal_curvature_level,
+                                             left_corneal_curvature_vertical, left_corneal_curvature_level_ax,
+                                             left_corneal_curvature_vertical_ax, right_corneal_curvature_level,
+                                             right_corneal_curvature_vertical, right_corneal_curvature_level_ax,
+                                             right_corneal_curvature_vertical_ax,
+                                             left_corneal_diopter_level, left_corneal_diopter_vertical,
+                                             left_corneal_diopter_aug,
+                                             right_corneal_diopter_level, right_corneal_diopter_vertical,
+                                             right_corneal_diopter_aug,
+                                             left_corneal_astigmatism, right_corneal_astigmatism, left_pupil,
+                                             right_pupil, pupil_distance, left_dioptric_normal, right_dioptric_normal,
+                                             is_delete, create_time, count_num, is_last, left_tandem_mirror,
+                                             right_tandem_mirror)
+        values (#{ellEyesightParticulars.id}, #{ellEyesightParticulars.planId}, #{ellEyesightParticulars.userId},
+                #{ellEyesightParticulars.visionComment}, #{ellEyesightParticulars.leftVision},
+                #{ellEyesightParticulars.rightVision}, #{ellEyesightParticulars.leftDiopterSph},
+                #{ellEyesightParticulars.rightDiopterSph}, #{ellEyesightParticulars.leftDiopterCyl},
+                #{ellEyesightParticulars.rightDiopterCyl}, #{ellEyesightParticulars.leftDiopterAx},
+                #{ellEyesightParticulars.rightDiopterAx}, #{ellEyesightParticulars.leftDiopterCorrect},
+                #{ellEyesightParticulars.rightDiopterCorrect}, #{ellEyesightParticulars.leftCornealCurvatureLevel},
+                #{ellEyesightParticulars.leftCornealCurvatureVertical},
+                #{ellEyesightParticulars.leftCornealCurvatureLevelAx},
+                #{ellEyesightParticulars.leftCornealCurvatureVerticalAx},
+                #{ellEyesightParticulars.rightCornealCurvatureLevel},
+                #{ellEyesightParticulars.rightCornealCurvatureVertical},
+                #{ellEyesightParticulars.rightCornealCurvatureLevelAx},
+                #{ellEyesightParticulars.rightCornealCurvatureVerticalAx},
+                #{ellEyesightParticulars.leftCornealDiopterLevel},
+                #{ellEyesightParticulars.leftCornealDiopterVertical}, #{ellEyesightParticulars.leftCornealDiopterAug},
+                #{ellEyesightParticulars.rightCornealDiopterLevel},
+                #{ellEyesightParticulars.rightCornealDiopterVertical}, #{ellEyesightParticulars.rightCornealDiopterAug},
+                #{ellEyesightParticulars.leftCornealAstigmatism}, #{ellEyesightParticulars.rightCornealAstigmatism},
+                #{ellEyesightParticulars.leftPupil}, #{ellEyesightParticulars.rightPupil},
+                #{ellEyesightParticulars.pupilDistance}, #{ellEyesightParticulars.leftDioptricNormal},
+                #{ellEyesightParticulars.rightDioptricNormal}, 0,
+                #{ellEyesightParticulars.createTime}, #{ellEyesightParticulars.countNum}, 1,
+                #{ellEyesightParticulars.leftTandemMirror}, #{ellEyesightParticulars.rightTandemMirror})
+    </insert>
+    <insert id="createBmi">
+        insert into ell_bmi_particulars(id, plan_id, user_id, height, weight, bmi, bmi_comment, is_delete, create_time,
+                                        count_num, is_last)
+        values (#{ellBmiParticulars.id}, #{ellBmiParticulars.planId}, #{ellBmiParticulars.userId},
+                #{ellBmiParticulars.height},
+                #{ellBmiParticulars.weight}, #{ellBmiParticulars.bmi}, #{ellBmiParticulars.bmiComment}, 0,
+                #{ellBmiParticulars.createTime}, #{ellBmiParticulars.countNum}, 1)
+    </insert>
+    <update id="updateScore">
+        update ell_test_history
+        set update_time=#{time}
+        <if test="updateScoreVo.testDateJson!=null and updateScoreVo.testDateJson!=''">
+            ,tes_data=#{updateScoreVo.testDateJson}
+        </if>
+        <if test="updateScoreVo.updateById!=0 and updateScoreVo.updateById!=null">
+            ,update_by=#{updateScoreVo.updateById}
+        </if>
+        <if test="updateScoreVo.isRetest!=0">
+            ,is_retest=#{updateScoreVo.isRetest}
+        </if>
+        <if test="updateScoreVo.extraData!=null and updateScoreVo.extraData!=''">
+            ,extra_data=#{updateScoreVo.extraData}
+        </if>
+        <if test="updateScoreVo.score!=null and updateScoreVo.comment!=null and updateScoreVo.data!=null">
+            ,score=#{updateScoreVo.score}
+            ,comment=#{updateScoreVo.comment}
+            ,data=#{updateScoreVo.data}
+        </if>
+        <if test="updateScoreVo.checkInTimestamp!=null">
+            ,check_in_timestamp=#{updateScoreVo.checkInTimestamp}
+        </if>
+        <if test="updateScoreVo.endTimestamp!=null">
+            ,end_timestamp=#{updateScoreVo.endTimestamp}
+        </if>
+        <if test="updateScoreVo.checkInTimestamp!=null">
+            ,time_spent=#{updateScoreVo.timeSpent}
+        </if>
+        where id = #{updateScoreVo.id}
+    </update>
+    <update id="updataEyesight">
+        update ell_eyesight_particulars
+        set is_last=0
+        where plan_id = #{ellEyesightParticulars.planId}
+          and user_id = #{ellEyesightParticulars.userId}
+          and is_delete = 0
+    </update>
+    <update id="updataBmi">
+        update ell_bmi_particulars
+        set is_last=0
+        where plan_id = #{planId}
+          and user_id = #{userId}
+          and is_delete = 0
+    </update>
+    <update id="updataEndScore">
+        update ell_plan_end_score
+        set end_score=#{endScore},
+            end_comment=#{endComment}
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </update>
+    <select id="findUserHistory" resultType="com.eluolang.common.core.pojo.EllTestHistory">
+        select *
+        from ell_test_history
+        where is_delete=0
+        <if test="ellHistoryVo.id!=null and ellHistoryVo.id!=''">
+            and id=#{ellHistoryVo.id}
+        </if>
+        <if test="ellHistoryVo.userId!=null and ellHistoryVo.userId!=''">
+            and user_id=#{ellHistoryVo.userId}
+        </if>
+        <if test="ellHistoryVo.planId!=null and ellHistoryVo.planId!=''">
+            and plan_id=#{ellHistoryVo.planId}
+        </if>
+        <if test="ellHistoryVo.createByExaminer!=null and ellHistoryVo.createByExaminer!=''">
+            and create_by_examiner=#{ellHistoryVo.createByExaminer}
+        </if>
+        <if test="ellHistoryVo.createByDevice!=null and ellHistoryVo.createByDevice!=''">
+            and create_by_device=#{ellHistoryVo.createByDevice}
+        </if>
+        <if test="ellHistoryVo.score!=null and ellHistoryVo.score!=''">
+            and score=#{ellHistoryVo.score}
+        </if>
+        <if test="ellHistoryVo.userSex!=null and ellHistoryVo.userSex!=''">
+            and user_sex=#{ellHistoryVo.userSex}
+        </if>
+        <if test="ellHistoryVo.userGrade!=null and ellHistoryVo.userGrade!=''">
+            and grade=#{ellHistoryVo.userGrade}
+        </if>
+        <if test="ellHistoryVo.userOrgId!=null and ellHistoryVo.userOrgId!=''">
+            and org_id=#{ellHistoryVo.userOrgId}
+        </if>
+        <if test="ellHistoryVo.testProject!=null and ellHistoryVo.testProject!=''">
+            and test_project=#{ellHistoryVo.testProject}
+        </if>
+    </select>
+    <select id="findUserScore" resultType="com.eluolang.physical.model.FindScoreVo">
+        select *
+        from ell_test_history a
+        left join plan_project_chance b on b.plan_id=#{findScoreConditionVo.planId}
+        where a.is_delete=0 and a.test_project=b.pro_id
+        <if test="findScoreConditionVo.accountOrgId != 1 and findScoreConditionVo.accountOrgId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{findScoreConditionVo.accountOrgId} and
+            `module` = 2)
+        </if>
+        <if test="findScoreConditionVo.finish==1">
+            and (select count(*) b from ell_plan_end_score where plan_id=#{findScoreConditionVo.planId} and
+            user_id=a.user_id)>0
+        </if>
+        <if test="findScoreConditionVo.userName!=null and findScoreConditionVo.userName!=''">
+            and a.user_id in(select id from ell_user where is_delete=0 and user_name like
+            CONCAT('%',#{findScoreConditionVo.userName},'%'))
+        </if>
+        <if test="findScoreConditionVo.finish==2">
+            and (select count(*) b from ell_plan_end_score where plan_id=#{findScoreConditionVo.planId} and
+            user_id=a.user_id)=0
+        </if>
+        <if test="findScoreConditionVo.orgId!=null and findScoreConditionVo.orgId!=''">
+            and a.org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findScoreConditionVo.orgId}), '%'))
+        </if>
+        <if test="findScoreConditionVo.id!=null and findScoreConditionVo.id!=''">
+            and a.id=#{findScoreConditionVo.id}
+        </if>
+        <if test="findScoreConditionVo.userId!=null and findScoreConditionVo.userId!=''">
+            and a.user_id=#{findScoreConditionVo.userId}
+        </if>
+        <if test="findScoreConditionVo.planId!=null and findScoreConditionVo.planId!=''">
+            and a.plan_id=#{findScoreConditionVo.planId}
+        </if>
+        <if test="findScoreConditionVo.createByExaminer!=null and findScoreConditionVo.createByExaminer!=''">
+            and a.create_by_examiner=#{findScoreConditionVo.createByExaminer}
+        </if>
+        <if test="findScoreConditionVo.createByDevice!=null and findScoreConditionVo.createByDevice!=''">
+            and a.create_by_device=#{findScoreConditionVo.createByDevice}
+        </if>
+        <if test="findScoreConditionVo.score!=null and findScoreConditionVo.score!=''">
+            and a.score=#{findScoreConditionVo.score}
+        </if>
+        <if test="findScoreConditionVo.userSex!=null and findScoreConditionVo.userSex!=''">
+            and a.user_sex=#{findScoreConditionVo.userSex}
+        </if>
+        <if test="findScoreConditionVo.userGrade!=null and findScoreConditionVo.userGrade!=''">
+            and a.grade=#{findScoreConditionVo.userGrade}
+        </if>
+        <if test="findScoreConditionVo.userOrgId!=null and findScoreConditionVo.userOrgId!=''">
+            and a.org_id=#{findScoreConditionVo.userOrgId}
+        </if>
+        <if test="findScoreConditionVo.testProject!=null and findScoreConditionVo.testProject!=''">
+            and a.test_project=#{findScoreConditionVo.testProject}
+        </if>
+        <if test="findScoreConditionVo.day!=null and findScoreConditionVo.day!=''">
+            and to_days(a.update_time)=to_days(#{findScoreConditionVo.day})
+        </if>
+        order by a.org_id asc
+    </select>
+    <select id="findScoreNum" resultType="java.lang.Integer">
+        select count(*)
+        from ell_test_history
+        where is_delete = 0
+          and test_project = #{proId}
+          and plan_id = #{planId}
+    </select>
+    <select id="selUserAvg" resultType="java.lang.String">
+        select IFNULL(AVG(score),0)
+        from ell_test_history
+        where is_delete = 0
+        and user_id = #{userId}
+        <if test="planId != null and planId != ''">
+            and plan_id = #{planId}
+        </if>
+        and test_project not in (35,43)
+    </select>
+    <select id="selUserTestScore" resultType="com.eluolang.physical.model.TestHistoryModel">
+        select eth.*, etp.pro_unit, etp.pro_name_abbreviation
+        from ell_test_history eth
+        LEFT JOIN ell_test_project etp on eth.test_project = etp.id
+        where eth.is_delete = 0
+        and eth.user_id = #{userId}
+        <if test="planId != null and planId != ''">
+            and plan_id = #{planId}
+        </if>
+    </select>
+    <select id="findVerify" resultType="com.eluolang.common.core.pojo.EllScoreVerify">
+        select *
+        from ell_score_verify
+        where user_id = #{userId}
+          and plan_id = #{planId}
+    </select>
+    <select id="findProHistory" resultType="java.lang.Integer">
+        select count(*)
+        from ell_test_history
+        where user_id = #{userId}
+          and plan_id = #{planId}
+    </select>
+    <select id="findPlanEndScore" resultType="com.eluolang.common.core.pojo.EllPlanEndScore">
+        select *
+        from ell_plan_end_score
+        where user_id = #{userId}
+          and plan_id = #{planId}
+    </select>
+    <select id="findPlanScoresOf" resultType="com.eluolang.common.core.pojo.EllPlanScoresOf">
+        select *
+        from ell_plan_scores_of
+        where plan_id = #{planId}
+    </select>
+    <select id="findErrorImage" resultType="com.eluolang.physical.model.ErrorScreenShotVo">
+        select a.error_image_uri, a.error_traces, a.is_retest, b.pro_name, a.pro_id
+        from ell_body_error_screenshot a
+                 left join ell_test_project b on b.id = a.pro_id
+        where a.plan_id = #{planId}
+          and a.user_id = #{userId}
+    </select>
+    <select id="findUserReturn" resultType="com.eluolang.physical.model.EllReturnScoreVo">
+        select a.*
+        from ell_test_history b
+        left join ell_user a on a.id=b.user_id
+        where (a.is_delete=0 and b.plan_id = #{findScoreConditionVo.planId} and b.is_delete=0
+        and b.test_project in (SELECT pro_id FROM plan_project_chance WHERE plan_id=#{findScoreConditionVo.planId})
+        <if test=" userIds != null and userIds.size()>0 ">
+            or(a.id in (
+            <foreach collection="userIds" item="id" separator=",">
+                #{id}
+            </foreach>
+            ))
+        </if>
+        )
+        <if test="findScoreConditionVo.userName!=null and findScoreConditionVo.userName!=''">
+            and a.user_name like concat('%',#{findScoreConditionVo.userName},'%')
+        </if>
+        <if test="findScoreConditionVo.accountOrgId != 1 and findScoreConditionVo.accountOrgId != 0">
+            and a.org_id in (select rat from pf_operator_rat where opt_id = #{findScoreConditionVo.accountOrgId} and
+            `module` = 2)
+        </if>
+        <if test="findScoreConditionVo.userId!=null and findScoreConditionVo.userId!=''">
+            and a.id=#{findScoreConditionVo.userId}
+        </if>
+        <if test="findScoreConditionVo.orgId!=null and findScoreConditionVo.orgId!=''">
+            and a.org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findScoreConditionVo.orgId}), '%'))
+        </if>
+        group by a.id order by a.org_id,a.id asc
+    </select>
+    <select id="findHasVision" resultType="java.lang.Integer">
+        select count(*)
+        from plan_project_chance pc
+                 left join ell_test_project ep on ep.pro_name = '视力'
+        where pc.plan_id = #{planId}
+          and ep.id = pc.pro_id
+          and pc.essential = 1
+    </select>
+    <select id="findHasVisionOptional" resultType="java.lang.Integer">
+        select count(*)
+        from ell_plan_pro_optional_item epi
+                 left join ell_test_project ep on ep.pro_name = '视力'
+        where epi.plan_id = #{planId}
+          and ep.id = epi.optional_pro_id
+          and epi.user_id = #{userId}
+
+    </select>
+    <select id="findEyesight" resultType="com.eluolang.common.core.pojo.EllEyesightParticulars">
+        select *
+        from ell_eyesight_particulars
+        where plan_id = #{planId}
+        <if test="userId!=null and userId!=''">
+            and user_id = #{userId}
+        </if>
+        and is_delete = 0
+    </select>
+    <select id="findSubsetProject" resultType="com.eluolang.common.core.pojo.EllPlanProjectChance">
+        select ppc.id,
+               etp.id as proId,
+               etp.pro_name,
+               ppc.create_by_id,
+               ppc.chance,
+               ppc.plan_id,
+               ppc.use_sex,
+               ppc.time,
+               ppc.essential,
+               etp.pro_name_abbreviation
+        from ell_test_project etp
+                 left join plan_project_chance ppc on ppc.plan_id = #{planId} and ppc.pro_id = #{parentId}
+        where is_delete = 2
+          and parent_id = #{parentId}
+    </select>
+    <select id="findBmi" resultType="com.eluolang.common.core.pojo.EllBmiParticulars">
+        select *
+        from ell_bmi_particulars
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+    <select id="contBmi" resultType="java.lang.Integer">
+        select count(user_id)
+        from ell_bmi_particulars
+        where user_id = #{userId}
+    </select>
+    <select id="selAvoidPro" resultType="com.eluolang.common.core.pojo.EllAvoidProject">
+        select *
+        from ell_avoid_project eap
+                 left join ell_avoid_test eat on eat.user_id = #{userId} and eat.plan_id = #{planId}
+        where eap.avoid_test_id = eat.id
+    </select>
+    <select id="selGradeVideo" resultType="com.eluolang.physical.model.EllGradeVideoVo">
+        select egv.begin_time, egv.end_time, fg.file_url, egv.is_retest, egv.fps
+        from ell_grade_video egv
+                 left join file_mgr fg on fg.id = egv.file_id
+        where egv.user_id = #{userId}
+          and egv.plan_id = #{planId}
+          and egv.project_id = #{proId}
+    </select>
+    <select id="selFindAvoid" resultType="java.lang.String">
+        select user_id
+        from ell_avoid_test
+        where plan_id = #{planId}
+    </select>
+    <select id="selUserList" resultType="com.eluolang.physical.model.EllScoreListDto">
+        select eu.user_name, eu.student_code, eu.user_sex as sex, eu.id as user_id,
+        eu.org_id,eu.student_id,eu.en_grade,eu.en_time
+        from ell_user eu
+        where
+        is_delete=0
+        <if test="ellScoreListVo.orgId!=null and ellScoreListVo.orgId!=''">and eu.org_id in (select id
+            from pf_depart
+            where
+            path like CONCAT((
+            select path
+            from pf_depart
+            where id =#{ellScoreListVo.orgId}), '%'))
+        </if>
+        <if test="ellScoreListVo.userName!=null and ellScoreListVo.userName!=''">
+            and eu.user_name like concat('%',#{ellScoreListVo.userName},'%')
+        </if>
+        <if test="ellScoreListVo.accountId!=1 and ellScoreListVo.accountId!=0">
+            and eu.org_id in(select rat from pf_operator_rat where opt_id = #{ellScoreListVo.accountId} and
+            `module` = 2)
+        </if>
+        <if test="ellScoreListVo.planId !=null and ellScoreListVo.planId!=''">
+            and eu.org_id in (select org_id from ell_use_plan_department where plan_id=#{ellScoreListVo.planId})
+        </if>
+        <if test="ellScoreListVo.studentCode!=null and ellScoreListVo.studentCode!=''">
+            and eu.student_code=#{ellScoreListVo.studentCode}
+        </if>
+        <if test="ellScoreListVo.userTypeSex==1 or ellScoreListVo.userTypeSex==2">
+            and user_sex=#{ellScoreListVo.userTypeSex}
+        </if>
+        order by eu.org_id,eu.user_sex,eu.student_id
+    </select>
+    <select id="selGradeList" resultType="com.eluolang.physical.model.EllScoreListGradeDto">
+        select ppc.pro_id                                                   as proId,
+               IF(eth.`data` IS NULL or eth.`data` = '', '未测试', eth.`data`) as grade,
+               ppc.pro_name,
+               ppc.pro_id                                                   as parentId,
+               eth.id                                                       as historyId,
+               etp.pro_unit                                                 as unit
+        from plan_project_chance ppc
+                 left join ell_test_history eth
+                           on eth.user_id = #{userId}
+                               and eth.plan_id = #{planId}
+                               and eth.test_project = ppc.pro_id
+                 left join ell_test_project etp on etp.id = ppc.pro_id
+        where ppc.plan_id = #{planId}
+        order by ppc.pro_id
+    </select>
+    <select id="importHistory" resultType="com.eluolang.physical.model.FindScoreVo">
+        select eu.org_id,IF(eth.comment is NULL
+        ,'',eth.comment) as comment ,eu.user_sex as userSex,IF(eth.grade is
+        NULL,'未测试',eth.grade) as grade,eu.id as
+        userId,IF(eth.data IS NULL ,'',eth.data) as data ,IF(eth.test_project is null ,0,eth.test_project) as
+        testProject,
+        eu.user_name,eu.en_time,eu.en_grade,eu.id as
+        userId,b.dept_name,eu.home_address,eu.student_code,eu.student_id,eu.ethnic,b.sig,eth.update_time,eth.score,eu.user_birth,eu.class_remark,eu.source_code
+        from ell_user eu
+        left join plan_project_chance ppc on ppc.plan_id = #{findScoreConditionVo.planId}
+        left join ell_test_history eth
+        on eth.test_project = ppc.pro_id and eth.user_id=eu.id and eth.plan_id = #{findScoreConditionVo.planId}
+        left join pf_depart b on b.id = eu.org_id
+        where eu.is_delete=0
+        <if test="findScoreConditionVo.day!=null and findScoreConditionVo.day!=''">
+            and to_days(eth.update_time)= to_days(#{findScoreConditionVo.day})
+        </if>
+        <if test="findScoreConditionVo.accountOrgId != 1 and findScoreConditionVo.accountOrgId != 0">
+            and eu.org_id in (select rat from pf_operator_rat where opt_id = #{findScoreConditionVo.accountOrgId} and
+            `module` = 2)
+        </if>
+        <if test="findScoreConditionVo.orgId!=null and findScoreConditionVo.orgId!=''">
+            and eu.org_id in (select id from pf_depart where path like CONCAT((select path from pf_depart where id =
+            #{findScoreConditionVo.orgId}), '%'))
+        </if>
+        order by eth.update_time desc
+    </select>
+    <select id="selUser" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where org_id in (select id
+                         from pf_depart
+                         where path like CONCAT((select path from pf_depart where id = #{orgId})
+                             , '%'))
+          and user_sex = #{userSex}
+    </select>
+    <select id="selPro" resultType="com.eluolang.common.core.pojo.EllTestProject">
+        select *
+        from ell_test_project
+        where id in (select pro_id
+                     from plan_project_chance
+                     where plan_id = #{planId}
+                       and use_sex like concat('%', #{useSex}, '%'))
+    </select>
+    <select id="selHistoryById" resultType="com.eluolang.common.core.pojo.EllTestHistory">
+        select *
+        from ell_test_history
+        where plan_id = #{planId}
+        <if test="userId!=null and userId!=''">
+            and user_id = #{userId}
+        </if>
+
+        and test_project = #{proId}
+    </select>
+    <select id="selProId" resultType="java.lang.String">
+        select pro_id
+        from plan_project_chance
+        where plan_id = #{planId}
+          and use_sex like concat('%', #{useSex}, '%')
+          and essential = 1
+    </select>
+    <select id="selScoreless60" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where id in (select user_id from ell_plan_end_score where 60 > end_score and plan_id = #{planId})
+    </select>
+    <select id="getOneUserScore" resultType="com.eluolang.physical.dto.OneUserScoreDto">
+        select eth.data, etp.pro_name as proName, eu.user_name, eu.id as userId, eth.score
+        from ell_user eu
+        left join ell_test_project etp on etp.id=#{proId}
+        left join ell_test_history eth on eth.user_id = eu.id and eth.test_project = #{proId} and eth.plan_id=#{planId}
+        where eu.is_delete = 0
+        <if test="orgId!=null and orgId!=''">
+            and eu.org_id in (select id
+            from pf_depart
+            where path like concat((select path from pf_depart where id = #{orgId}),'%') and last_level = 1)
+        </if>
+        <if test="account!=0 and account !=1">
+            and eu.org_id in (select rat from pf_operator_rat where opt_id=#{account} and module=2)
+        </if>
+        <if test="userName!=null and userName!=''">
+            and user_name like concat('%',#{userName},'%')
+        </if>
+        <if test="userId!=null and userId!=''">
+            and eu.id=#{userId}
+        </if>
+    </select>
+    <select id="selUserTestPro" resultType="java.lang.String">
+        select pro_id
+        from plan_project_chance
+        where plan_id = #{planId}
+          and use_sex like concat('%', (select user_sex from ell_user where id = #{userId}), '%')
+          and (essential = 1
+            or pro_id in (select optional_pro_id
+                          from ell_plan_pro_optional_item
+                          where plan_id = #{planId}
+                            and user_id = #{userId}
+            )
+            )
+    </select>
+    <select id="selAllProHistory" resultType="com.eluolang.physical.model.FindScoreVo">
+        select ppc.pro_name as projectName, ppc.pro_id as testProject,eth.score,eth.data,ppc.plan_id
+        from plan_project_chance ppc
+        left join ell_test_history eth on eth.plan_id = ppc.plan_id and eth.user_id = #{userId} and eth.test_project =
+        ppc.pro_id
+        where ppc.plan_id=#{planId}
+        <if test="proId!=null">
+            and ppc.pro_id in(
+            <foreach collection="proId" item="id" separator=",">
+                #{id}
+            </foreach>
+            )
+        </if>
+    </select>
+    <select id="selProGdp" resultType="java.lang.String">
+        select pro_gdp
+        from plan_project_chance
+        where plan_id = #{planId}
+          and pro_id = #{proId}
+    </select>
+    <select id="selEndAndProNameScore" resultType="com.eluolang.physical.dto.EllScoreHistoryDto">
+        select etp.pro_name,eu.user_name,eth.data,eth.score,etp.id as proId,epec.end_score,pd.dept_name as
+        className,eu.user_sex,eu.id,eeu.test_number
+        from ell_user eu
+        left join ell_test_project etp
+        on etp.id in
+        (select pro_id
+        from plan_project_chance
+        where plan_id = #{planId}
+        and essential = 1
+        and use_sex like concat('%', eu.user_sex, '%'))
+        or etp.id in
+        (select optional_pro_id
+        from ell_plan_pro_optional_item
+        where plan_id = #{planId}
+        and user_id = eu.id)
+        LEFT JOIN ell_test_history eth
+        on eth.test_project = etp.id and eth.plan_id = #{planId} and
+        eth.user_id = eu.id
+        LEFT JOIN ell_plan_end_score epec
+        on epec.plan_id = #{planId} and epec.user_id = eu.id
+        left join pf_depart pd on pd.id=eu.org_id
+        left join ell_examinee_user eeu on group_id in (select id from ell_examinee_group where plan_id=#{planId}) and
+        stu_id=eu.id
+        where eu.org_id in
+        (SELECT org_id FROM ell_use_plan_department WHERE plan_id = #{planId})
+        and eu.is_delete = 0
+        <if test="accountId!=0 and accountId!=1 and accountId!=null">
+            and eu.org_id in (select rat from pf_operator_rat where opt_id=#{accountId} and module=2)
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and eu.org_id in (select id
+            from pf_depart
+            where path like concat((select path from pf_depart where id = #{orgId}),'%') and last_level = 1)
+        </if>
+        GROUP BY eu.id, etp.id
+    </select>
+    <select id="selOptionProId" resultType="java.lang.String">
+        select optional_pro_id
+        from ell_plan_pro_optional_item
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+    <select id="selHistory" resultType="com.eluolang.common.core.pojo.EllTestHistory">
+        select *
+        from ell_test_history
+        where plan_id = #{planId}
+        group by user_id
+    </select>
+    <select id="selVerifyByUserId" resultType="com.eluolang.common.core.pojo.EllScoreVerify">
+        select *
+        from ell_score_verify
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+    <select id="selTestProNum" resultType="java.lang.Integer">
+        select count(id)
+        from ell_test_history
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+</mapper>

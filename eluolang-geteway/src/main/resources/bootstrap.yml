@@ -1,0 +1,60 @@
+server:
+  port: 8080
+
+#项目的名称
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  application:
+    name: ELL-gateway
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+        # 配置文件格式
+        file-extension: yml
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+#        # 共享配置
+#        shared-dataids: application.${spring.cloud.nacos.config.file-extension}
+#        ext-config:
+#          - data-id: IBP-gateway.yml
+#            group: DEFAULT_GROUP
+#            refresh: true
+    sentinel:
+      # 取消控制台懒加载
+      eager: true
+      transport:
+        # 控制台地址
+        dashboard: 127.0.0.1:8849
+      # nacos配置持久化
+      datasource:
+        # 名称随意
+        flow:
+          nacos:
+            server-addr: localhost:8848
+            dataId: ${spring.application.name}-sentinel.yml
+            rule-type: flow
+            namespace: 2f0d58b4-964f-497c-b09c-deb18c9c3a6a
+
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: THREAD
+          thread:
+            timeoutInMilliseconds: 120000  #超过此时间后进入熔断，这个时间应该大于后端及其ribbon的时间，否则后端接口未执行完就进入熔断
+ribbon:
+  ReadTimeout: 120000  #ribbon读取超时时间，接口处理时间，不包括建立连接时间
+  ConnectTimeout: 70000 #ribbon请求连接时间
+#  OkToRetryOnAllOperations: false #网关默认开启重试，此属性设置为false 只对GET请求重试，保证幂等性
+#  MaxAutoRetries: 1  #Max number of retries on the same server (excluding the first try)
+#  MaxAutoRetriesNextServer: 1 #Max number of next servers to retry (excluding the first server)
+#  ServerListRefreshInterval: 10000 # refresh the server list from the source

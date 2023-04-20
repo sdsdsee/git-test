@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.ProjectMapper">
+
+    <insert id="addProject">
+        INSERT into ell_test_project(pro_name, pro_unit, pro_name_abbreviation, pro_icon, create_by_id, create_time,
+                                     is_delete, synopsis)
+        values (#{testProject.proName}, #{testProject.proUnit}, #{testProject.proNameAbbreviation},
+                #{testProject.proIcon},
+                #{testProject.createById}, #{testProject.createTime}, 0, #{testProject.synopsis})
+    </insert>
+    <update id="updataProject">
+        UPDATE ell_test_project
+        set update_time=#{updateTestProject.updateTime},update_by_id=#{updateTestProject.updateById}
+        <if test="updateTestProject.proName != null and updateTestProject.proName != ''">
+            ,pro_name=#{updateTestProject.proName}
+        </if>
+        <if test="updateTestProject.proUnit != null and updateTestProject.proUnit != ''">
+            ,pro_unit=#{updateTestProject.proUnit}
+        </if>
+        <if test="updateTestProject.proIcon != null and updateTestProject.proIcon != ''">
+            ,pro_icon=#{updateTestProject.proIcon}
+        </if>
+        <if test="updateTestProject.proNameAbbreviation !=null and updateTestProject.proNameAbbreviation != '' ">
+            ,pro_name_abbreviation=#{updateTestProject.proNameAbbreviation}
+        </if>
+        <if test="updateTestProject.synopsis!=null and updateTestProject.synopsis!=''">
+            ,synopsis=#{updateTestProject.synopsis}
+        </if>
+        where id=#{updateTestProject.id} and is_delete=0
+    </update>
+    <update id="deleteProject">
+        update ell_test_project
+        set is_delete=1
+        where id = #{id}
+          and is_delete = 0
+    </update>
+    <delete id="deleteProjectSys">
+        delete
+        from ell_test_project
+        where id =
+              #{id}
+    </delete>
+    <select id="findProject" resultType="com.eluolang.common.core.pojo.EllTestProject">
+        select *
+        from ell_test_project
+        where is_delete = 0
+    </select>
+    <select id="findProjectById" resultType="com.eluolang.common.core.pojo.EllTestProject">
+        select *
+        from ell_test_project
+        where id = #{id}
+    </select>
+</mapper>

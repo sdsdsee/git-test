@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.Depart//DTD Mapper 3.0//EN" "http://mybatis.Depart/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.eluolang.module.sys.user.mapper.DepartMapper">
+    <resultMap id="BaseResultMap" type="com.eluolang.module.sys.user.vo.DepartVo">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="last_level" property="lastLevel"/>
+        <result column="path" property="path"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="created_time" property="createdTime"/>
+        <result column="updated_by" property="updatedBy"/>
+        <result column="updated_time" property="updatedTime"/>
+        <result column="opt_id" property="optId"/>
+        <result column="opt_name" property="optName"/>
+    </resultMap>
+
+    <insert id="regDepart" parameterType="com.eluolang.module.sys.user.dto.DepartDto"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO pf_depart(
+        parent_id
+        ,dept_name
+        ,last_level
+        ,path
+        ,created_by
+        ,created_time
+        ,updated_by
+        ,updated_time
+        ,tree_id
+        ,opt_id
+        ,opt_name
+        ,sig
+        ,is_delete
+        ,is_school
+        )
+        VALUES(
+        #{parentId}
+        ,#{deptName}
+        ,#{lastLevel}
+        ,#{path}
+        ,#{createdBy}
+        ,#{createdTime}
+        ,#{updatedBy}
+        ,#{updatedTime}
+        ,#{id}
+        ,#{optId}
+        ,#{createdBy}
+        ,#{sig}
+        ,0
+        ,#{isSchool}
+        );
+    </insert>
+
+    <insert id="regDepartByTree" parameterType="com.eluolang.module.sys.user.dto.DepartDto"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO pf_depart(
+        dept_name
+        ,last_level
+        ,path
+        ,created_by
+        ,created_time
+        ,updated_by
+        ,updated_time
+        ,tree_id
+        ,parent_tree_id
+        ,opt_id
+        ,opt_name
+        ,sig
+        ,is_delete
+        ,is_school
+
+        )
+        VALUES(
+        #{deptName}
+        ,#{lastLevel}
+        ,#{path}
+        ,#{createdBy}
+        ,#{createdTime}
+        ,#{updatedBy}
+        ,#{updatedTime}
+        ,#{id}
+        ,#{parentId}
+        ,#{optId}
+        ,#{createdBy}
+        ,#{sig}
+        ,0
+        ,#{isSchool}
+        );
+    </insert>
+    <insert id="addDepart" keyProperty="id">
+        insert into pf_depart(id,dept_name, parent_id, last_level, path, created_by, created_time, updated_by,
+        updated_time, tree_id, parent_tree_id, opt_id, opt_name, sig, is_delete, is_school)
+        values
+        <foreach collection="departDto" index="index" separator="," item="depart">
+            (#{depart.id}
+            ,#{depart.deptName}
+            , #{depart.parentId}
+            , #{depart.lastLevel}
+            , #{depart.path}
+            , #{depart.createdBy}
+            , #{depart.createdTime}
+            , #{depart.updatedBy}
+            , #{depart.updatedTime}
+            , null
+            , null
+            , #{depart.optId}
+            , #{depart.createdBy}
+            , #{depart.sig}
+            , 0
+            , #{depart.isSchool})
+        </foreach>
+    </insert>
+    <update id="updateDepart" parameterType="com.eluolang.module.sys.user.dto.DepartDto">
+        UPDATE pf_depart set
+        dept_name=#{deptName}
+        ,last_level=#{lastLevel}
+        ,updated_by=#{updatedBy}
+        ,updated_time=#{updatedTime}
+        ,sig=#{sig}
+        ,is_school=#{isSchool}
+        WHERE id=#{id}
+    </update>
+
+    <update id="updateDepartByTid" parameterType="com.eluolang.module.sys.user.dto.DepartDto">
+        UPDATE pf_depart set
+        dept_name=#{deptName}
+        ,last_level=#{lastLevel}
+        ,updated_by=#{updatedBy}
+        ,updated_time=#{updatedTime}
+        ,sig=#{sig}
+        ,is_school=#{isSchool}
+        WHERE tree_id=#{id}
+    </update>
+
+    <update id="updateDepartPathAndPidByTid">
+        UPDATE pf_depart dp,pf_depart dm
+        SET dm.path = CONCAT(dp.path ,dm.id,"/"),
+        dm.parent_id = dp.id
+        WHERE dm.tree_id = #{id} AND dm.parent_tree_id = dp.tree_id
+    </update>
+
+    <update id="updateDepartPathById">
+        UPDATE pf_depart dp,pf_depart dm
+        SET dm.path = CONCAT(dp.path ,dm.id,"/")
+        WHERE dm.id = #{id} AND dm.parent_id = dp.id
+    </update>
+    <update id="upDepartName">
+        UPDATE pf_depart
+        set dept_name=#{departName}
+        where id = #{id}
+    </update>
+    <select id="getDepartByDepartVoPath" resultMap="BaseResultMap">
+        SELECT * FROM pf_depart where
+        <foreach collection="departVoList" item="item" index="index" separator="or">
+            (path like CONCAT(#{item.path},"%"))
+        </foreach>
+    </select>
+    <select id="getAllDepart" resultMap="BaseResultMap">
+        SELECT * FROM pf_depart
+    </select>
+    <select id="getDepartByOperId" resultMap="BaseResultMap">
+        <if test="optId == 1 or optId == 2">
+            select * from pf_depart order by id
+        </if>
+        <if test="optId != 1 and optId != 2">
+            select * from pf_depart where id in (select rat FROM pf_operator_rat where opt_id = #{optId} and `module` =
+            1) order by id
+        </if>
+    </select>
+    <select id="getDepartByOptIdAndPath" resultMap="BaseResultMap">
+        SELECT * FROM pf_depart WHERE opt_id = #{optId} AND path LIKE CONCAT(#{path},"%")
+    </select>
+    <select id="getDepartByOperPath" resultMap="BaseResultMap">
+        SELECT * FROM pf_depart WHERE path LIKE CONCAT(#{path},"%")
+    </select>
+    <select id="getDepartByPath" resultMap="BaseResultMap">
+        SELECT * FROM pf_depart WHERE path = #{path}
+    </select>
+    <select id="getDepartById" resultMap="BaseResultMap">
+        SELECT *
+        FROM pf_depart
+        WHERE id = #{id}
+    </select>
+    <select id="getDepartByTreeId" resultMap="BaseResultMap">
+        SELECT * FROM pf_depart where tree_id = #{tid}
+    </select>
+    <select id="queryUserByDeptId" resultType="java.lang.Integer">
+        SELECT COUNT(eu.id) as count FROM ell_user eu LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        WHERE eu.is_delete = 0 and pd.path LIKE CONCAT((select path from pf_depart where id = #{id}),"%")
+    </select>
+    <select id="checkExistById" resultType="java.lang.Integer">
+        SELECT count(id) as count FROM pf_depart where id = #{id}
+    </select>
+    <select id="checkExistByTid" resultType="java.lang.Integer">
+        SELECT count(id) as count FROM pf_depart where tree_id = #{id}
+    </select>
+    <select id="queryChildCountById" resultType="java.lang.Integer">
+        SELECT COUNT(id) as count FROM pf_depart WHERE path LIKE CONCAT((SELECT path FROM pf_depart WHERE id=#{id}),"%")
+    </select>
+    <select id="queryChildCountByTid" resultType="java.lang.Integer">
+        SELECT COUNT(id) as count FROM pf_depart WHERE path LIKE CONCAT((SELECT path FROM pf_depart WHERE
+        tree_id=#{tid}),"%")
+    </select>
+    <select id="selDepartName" resultType="com.eluolang.module.sys.user.dto.DepartDto">
+        select *
+        from pf_depart
+        where
+        <if test="id==null or id==''">
+            dept_name = #{departName}
+            and parent_id = #{parentId}
+        </if>
+        <if test="id!=null and id!=''">
+            id=#{id}
+        </if>
+    </select>
+    <select id="selMaxId" resultType="java.lang.Integer">
+        SELECT max(id)
+        FROM pf_depart
+    </select>
+    <select id="selDepart" resultType="com.eluolang.module.sys.user.vo.EllDeriveDepart">
+        select *
+        from pf_depart
+        where
+        1=1
+        <if test="accountOrgId!=0 and accountOrgId!=1">
+            and id in (select rat from pf_operator_rat where opt_id = #{accountOrgId} and `module` = 2)
+        </if>
+        <if test="id==0">
+            and last_level = 1
+        </if>
+        <if test="id!=0 and id!=1">
+            and id =#{id}
+        </if>
+        <if test="deptId!=null and deptId!=''">
+            and path like concat((select path from pf_depart where id=#{deptId}),'%')
+        </if>
+    </select>
+    <select id="selAllClass" resultType="com.eluolang.module.sys.user.vo.EllDeriveDepart">
+        select *
+        from pf_depart
+        where last_level = 1
+    </select>
+    <select id="selUser" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where org_id = #{orgId}
+    </select>
+    <select id="selSchoolByDeptId" resultType="com.eluolang.common.core.pojo.PfDepart">
+        select * from pf_depart as a,(select getParentList(#{deptId}) ids) as b where FIND_IN_SET(id,ids) and is_school
+        = 1
+    </select>
+    <delete id="delDepartById">
+        delete from pf_depart where id=#{id}
+    </delete>
+    <delete id="delDepartByPid">
+        delete from pf_depart where tree_id=#{id}
+    </delete>
+</mapper>

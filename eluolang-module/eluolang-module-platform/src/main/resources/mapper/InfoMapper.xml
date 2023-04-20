@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.platform.mapper.InfoMapper">
+    <insert id="uploadImage">
+        insert into file_mgr(id, upload_time, file_url, type, size, file_name)
+        values
+        <foreach collection="ellFIleVoList" item="ell" index="index" separator=",">
+            (#{ell.id}, #{ell.uploadTime}, #{ell.fileUrl}, #{ell.type}, #{ell.size}, #{ell.fileName})
+        </foreach>
+
+    </insert>
+    <insert id="addInfo">
+        insert into ell_information(id, info_title, info_type, state, create_time, create_by, interval_time, is_delete,
+                                    text, version)
+        VALUES (#{ellInformationVo.id}, #{ellInformationVo.infoTitle}, #{ellInformationVo.infoType}, 1,
+                #{ellInformationVo.createTime}, #{ellInformationVo.createBy}, #{ellInformationVo.intervalTime}, 0,
+                #{ellInformationVo.text}, 0)
+    </insert>
+    <insert id="insertBatch">
+        insert into ell_info_publish_target(id,device_id,info_id,release_time,release_order)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.id},#{entity.deviceId},#{entity.infoId},#{entity.releaseTime},#{entity.releaseOrder})
+        </foreach>
+    </insert>
+    <insert id="insertBatchInfoFile">
+        insert into ell_info_file(id,file_id,info_id,interval_time)
+        values
+        <foreach collection="entities" item="entity" separator=",">
+            (#{entity.id},#{entity.fileId},#{entity.infoId},#{entity.intervalTime})
+        </foreach>
+    </insert>
+    <insert id="insertLedInfo">
+        insert into ell_led_information(id, info_title, image_id, info_type, state, create_time, create_by,
+                                        content, is_delete)
+        values (#{ellLedInformationVo.id}, #{ellLedInformationVo.infoTitle}, #{ellLedInformationVo.imageId},
+                #{ellLedInformationVo.infoType}, 1, #{ellLedInformationVo.createTime},
+                #{ellLedInformationVo.createBy}, #{ellLedInformationVo.content},
+                0)
+    </insert>
+    <insert id="addPublishLedInfo">
+        insert into ell_led_publish_info(id, device_id, create_time, type, led_info_id,content)
+        values (
+        <foreach collection="ellLedPublishInfoList" separator="," item="ellLedPublishInfo" index="index">
+            #{ellLedPublishInfo.id},#{ellLedPublishInfo.deviceId},#{ellLedPublishInfo.createTime},#{ellLedPublishInfo.type}
+            ,#{ellLedPublishInfo.ledInfoId},#{ellLedPublishInfo.content}
+        </foreach>
+        )
+    </insert>
+    <update id="updateInfo">
+        update ell_information
+        set
+        id=id,
+        version=version+1
+        <if test="ellInformation.updateTime!=null and ellInformation.updateTime!=''">
+            ,update_time =#{ellInformation.updateTime}
+        </if>
+
+        <if test="ellInformation.infoTitle != null and ellInformation.infoTitle != ''">
+            ,info_title = #{ellInformation.infoTitle}
+        </if>
+        <if test="ellInformation.infoType != null and ellInformation.infoType != ''">
+            ,info_type = #{ellInformation.infoType}
+        </if>
+        <if test="ellInformation.state != null and ellInformation.state != ''">
+            ,state = #{ellInformation.state}
+        </if>
+        <if test="ellInformation.createBy != null and ellInformation.createBy != ''">
+            ,create_by = #{ellInformation.createBy}
+        </if>
+        <if test="ellInformation.isDelete != null and ellInformation.isDelete != ''">
+            ,is_delete = 1
+        </if>
+        <if test="ellInformation.text!=null and ellInformation.text!=''">
+            ,text=#{ellInformation.text}
+        </if>
+        where id = #{ellInformation.id} and is_delete=0
+    </update>
+    <update id="updateLED">
+        update ell_led_information
+        <set>update_time = #{ellLedInformationVo.createTime}
+            <if test="ellLedInformationVo.infoTitle != null and ellLedInformationVo.infoTitle != ''">
+                ,info_title = #{ellLedInformationVo.infoTitle}
+            </if>
+            <if test="ellLedInformationVo.imageId != null and ellLedInformationVo.imageId != ''">
+                ,image_id = #{ellLedInformationVo.imageId}
+            </if>
+            <if test="ellLedInformationVo.infoType != null and ellLedInformationVo.infoType != ''">
+                ,info_type = #{ellLedInformationVo.infoType}
+            </if>
+            <if test="ellLedInformationVo.state != null and ellLedInformationVo.state != ''">
+                , state = #{ellLedInformationVo.state}
+            </if>
+            <if test="ellLedInformationVo.content != null and ellLedInformationVo.content != ''">
+                ,content = #{ellLedInformationVo.content}
+            </if>
+        </set>
+        where id = #{ellLedInformationVo.id}
+    </update>
+    <!--通过主键删除-->
+    <delete id="deleteByInfoId">
+        delete
+        from ell_info_publish_target
+        where info_id = #{infoId}
+        <if test="deviceId!=null and deviceId!=''">
+            and device_id=#{deviceId}
+        </if>
+    </delete>
+    <delete id="delInfoDevice">
+        delete
+        from ell_info_publish_target
+        where info_id = #{infoId}
+    </delete>
+    <delete id="delInfoFile">
+        delete
+        from ell_info_file
+        where info_id = #{infoId}
+    </delete>
+    <delete id="delLedInfo">
+        delete
+        from ell_led_publish_info
+        where device_id = #{deviceId}
+          and led_info_id = #{ledInfoId}
+    </delete>
+    <select id="findInfo" resultType="com.eluolang.platform.vo.EllSelInfoVo">
+        select
+        ei.id,ei.info_title,ei.info_type,ei.state,ei.create_time,ei.update_time,ei.create_by,ei.is_delete,
+        ei.interval_time,ei.text
+        from ell_information ei
+        left join pf_operator eo on eo.id=#{ellInformation.createBy}
+        WHERE
+        ei.is_delete = 0
+        <if test="ellInformation.id != null and ellInformation.id != ''">
+            and ei.id = #{ellInformation.id}
+        </if>
+        <if test="ellInformation.infoTitle != null and ellInformation.infoTitle != ''">
+            and ei.info_title like concat('%', #{ellInformation.infoTitle},'%')
+        </if>
+        <if test="ellInformation.infoType != null and ellInformation.infoType != ''">
+            and ei.info_type = #{ellInformation.infoType}
+        </if>
+        <if test="ellInformation.state != null and ellInformation.state != ''">
+            and ei.state = #{ellInformation.state}
+        </if>
+        <if test="ellInformation.createTime != null and ellInformation.createTime != ''">
+            and ei.create_time = #{ellInformation.createTime}
+        </if>
+        <if test="ellInformation.updateTime != null and ellInformation.updateTime != ''">
+            and ei.update_time = #{ellInformation.updateTime}
+        </if>
+        <if test="ellInformation.createBy != null and ellInformation.createBy != '' and ellInformation.createBy !=0 and ellInformation.createBy !=1">
+            and ei.create_by in
+            (select id from pf_operator where path like concat(eo.path,'%'))
+        </if>
+        group by ei .id
+    </select>
+    <select id="selPublishDevice" resultType="com.eluolang.common.core.pojo.EllInfoPublishTarget">
+        select *
+        from ell_info_publish_target
+        where info_id = #{infoId}
+    </select>
+    <select id="selFileUrl" resultType="com.eluolang.platform.vo.EllFIleVo">
+        select fm.file_url, fm.id
+        from ell_info_file eif
+                 left join file_mgr fm on fm.id = eif.file_id
+        where eif.info_id = #{infoId}
+    </select>
+    <select id="findInfoOrder" resultType="java.lang.Integer">
+        select count(*)
+        from ell_info_publish_target
+        where id = #{deviceId}
+    </select>
+    <select id="selDeviceId" resultType="com.eluolang.platform.vo.EllDeviceIdAndNum">
+        select *
+        from ell_smart_device_management
+        where
+        is_delete=0 and
+        id in (
+        <foreach collection="deviceArray" item="device" separator=",">
+            #{device}
+        </foreach>)
+        <if test="deviceType!=0">
+            and device_type=#{deviceType}
+        </if>
+    </select>
+    <select id="selFile" resultType="com.eluolang.platform.vo.EllInfoFileVo">
+        select fm.file_url, eif.*
+        from ell_info_file eif
+                 left join file_mgr fm on fm.id = eif.file_id
+        where eif.info_id = #{infoId}
+    </select>
+
+    <select id="selInfoDeliveryFile" resultType="com.eluolang.platform.vo.InfoDeliveryFileVo">
+        select ei.interval_time,
+               ei.id as infoId,
+               eipt.release_order,
+               ei.info_type,
+               ei.text,
+               ei.version,
+               ei.info_title,
+               eipt.release_time
+        from ell_smart_device_management ed
+                 LEFT JOIN ell_info_publish_target eipt on ed.id = eipt.device_id
+                 left join ell_information ei on ei.id = eipt.info_id and ei.is_delete = 0 and ei.state = 2
+        where ed.device_id = #{deviceId}
+          and eipt.info_id = #{infoId}
+          and ed.is_delete = 0
+    </select>
+
+    <select id="selFileByInfoId" resultType="com.eluolang.platform.vo.DeliveryFileVo">
+        select eif.file_id, fm.file_url, eif.interval_time
+        from ell_info_file eif
+                 LEFT JOIN file_mgr fm on eif.file_id = fm.id
+        where eif.info_id = #{infoId}
+    </select>
+    <select id="selDeviceByInfo" resultType="com.eluolang.platform.vo.EllDeviceIdAndNum">
+        select ed.device_id,ed.id
+        from ell_smart_device_management ed
+        left join ell_info_publish_target eipt on eipt.info_id = #{infoId}
+        where ed.id = eipt.device_id and ed.is_delete=0
+        <if test="deviceType!=0">
+            and ed.device_type=#{deviceType}
+        </if>
+    </select>
+    <select id="selLedPublish" resultType="com.eluolang.platform.vo.EllLedInformationPublishVo">
+        select
+        id,device_id,content,type,led_info_id
+        from ell_led_publish_info
+        <where>
+            <if test="ellLedInformationPublishVo.id != null and ellLedInformationPublishVo.id != ''">
+                and id = #{ellLedInformationPublishVo.id}
+            </if>
+            <if test="ellLedInformationPublishVo.deviceId != null and ellLedInformationPublishVo.deviceId != ''">
+                and device_id = #{ellLedInformationPublishVo.deviceId}
+            </if>
+            <if test="ellLedInformationPublishVo.content != null and ellLedInformationPublishVo.content != ''">
+                and content = #{ellLedInformationPublishVo.content}
+            </if>
+            <if test="ellLedInformationPublishVo.type != null and ellLedInformationPublishVo.type != ''">
+                and type = #{ellLedInformationPublishVo.type}
+            </if>
+            <if test="ellLedInformationPublishVo.ledInfoId != null and ellLedInformationPublishVo.ledInfoId != ''">
+                and led_info_id = #{ellLedInformationPublishVo.ledInfoId}
+            </if>
+        </where>
+    </select>
+    <select id="selLedInfo" resultType="com.eluolang.platform.vo.EllLedInformationVo">
+        select
+        eli.id, eli.info_title, eli.image_id, eli.info_type, eli.state, eli.create_time, eli.update_time, eli.create_by,
+        eli.content, eli.is_delete
+        ,fm.file_url
+        from ell_led_information eli
+        left join file_mgr fm on eli.image_id=fm.id
+        <where>
+            eli.is_delete = 0
+            <if test="ellLedInformationVo.id != null and ellLedInformationVo.id != ''">
+                and eli.id = #{ellLedInformationVo.id}
+            </if>
+            <if test="ellLedInformationVo.infoTitle != null and ellLedInformationVo.infoTitle != ''">
+                and eli.info_title = #{ellLedInformationVo.infoTitle}
+            </if>
+            <if test="ellLedInformationVo.imageId != null and ellLedInformationVo.imageId != ''">
+                and eli.image_id = #{ellLedInformationVo.imageId}
+            </if>
+            <if test="ellLedInformationVo.infoType != null and ellLedInformationVo.infoType != ''">
+                and eli.info_type = #{ellLedInformationVo.infoType}
+            </if>
+            <if test="ellLedInformationVo.state != null and ellLedInformationVo.state != ''">
+                and eli.state = #{ellLedInformationVo.state}
+            </if>
+            <if test="ellLedInformationVo.createBy != null and ellLedInformationVo.createBy != ''">
+                and eli.create_by = #{ellLedInformationVo.createBy}
+            </if>
+            <if test="ellLedInformationVo.content != null and ellLedInformationVo.content != ''">
+                and eli.content = #{ellLedInformationVo.content}
+            </if>
+        </where>
+    </select>
+    <select id="selFileLed" resultType="java.lang.String">
+        select file_url
+        from file_mgr
+        where id = #{fileId}
+    </select>
+
+</mapper>

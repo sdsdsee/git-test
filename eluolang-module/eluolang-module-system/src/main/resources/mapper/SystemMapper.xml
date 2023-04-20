@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//drs" "http://www.mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.system.mapper.SystemMapper">
+    <insert id="insertLog">
+        insert into
+        oper_log(id,oper_name,oper_real_name,oper_time,oper_ip,oper_module,oper_obj,oper_type,oper_result,oper_content,
+        oper_status,method,request_method,json_result,error_msg,oper_param) values (#{id},#{operName},#{operRealName},
+        REPLACE(UNIX_TIMESTAMP(NOW()),'.',''),#{operIp},#{operModule},#{operObj},
+        #{operType},#{operResult},#{operContent},#{operStatus},#{method},#{requestMethod},#{jsonResult},
+        #{errorMsg},#{operParam})
+    </insert>
+
+    <select id="getOperLogAll" resultType="com.eluolang.common.core.pojo.OperLog">
+        select * from oper_log
+        <where>
+            <if test="operName != null and operName != ''">
+                and oper_name like concat('%',#{operName},'%')
+            </if>
+            <if test="operType != null and operType != ''">
+                and oper_type = #{operType}
+            </if>
+            <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+                and FROM_UNIXTIME(oper_time,'%Y-%m-%d %H:%i:%s') between #{startTime} and #{endTime}
+            </if>
+        </where>
+        order by oper_time desc
+    </select>
+
+    <!--将上传的文件信息进行保存入库-->
+    <insert id="saveFileInfo" parameterType="com.eluolang.common.core.pojo.FileMgr">
+        insert into file_mgr
+        values
+        (#{id},#{uploadTime},#{type},#{fileUrl},#{thumbnailUrl},#{size},#{fileName})
+    </insert>
+
+    <!--根据文件id查询文件信息-->
+    <select id="getFileInfo" resultType="com.eluolang.common.core.pojo.FileMgr">
+        SELECT * FROM file_mgr
+        WHERE id = #{fileId}
+    </select>
+    <select id="getIdent" resultType="String">
+        SELECT value FROM config where id = 12
+    </select>
+    <update id="updateIdent" parameterType="String">
+        update config set value=#{ident} where id = 12
+    </update>
+
+</mapper>

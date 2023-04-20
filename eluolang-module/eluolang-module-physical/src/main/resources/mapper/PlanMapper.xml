@@ -1,0 +1,534 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.PlanMapper">
+    <insert id="createPlan">
+        INSERT into ell_plan(id, plan_title, plan_addr, date_begin, date_end, plan_state, org_id, plan_remark,
+                             pro_id, use_rules, is_resurvey, is_delete, is_subscribe, create_time, create_by_id,
+                             is_authentication, is_exam, customize_the_number, auth_num, is_view)
+        values ( #{ellPlan.id}, #{ellPlan.planTitle}, #{ellPlan.planAddr}, #{ellPlan.dateBegin}, #{ellPlan.dateEnd}
+               , #{ellPlan.planState}
+               , #{ellPlan.orgId}, #{ellPlan.planRemark}, #{ellPlan.proId}, #{ellPlan.useRules}, #{ellPlan.isResurvey}
+               , 0, #{ellPlan.isSubscribe}
+               , #{ellPlan.createTime}, #{ellPlan.createById}, #{ellPlan.isAuthentication}
+               , #{ellPlan.isExam}, #{ellPlan.customizeTheNumber}, #{ellPlan.authNum}, #{ellPlan.isView})
+    </insert>
+    <insert id="addUseOrg">
+        insert into ell_use_plan_department(plan_id, org_id, use_rule, parent_id)
+        values (#{planId},
+                #{orgId}, #{useRule}, #{parentId})
+    </insert>
+    <insert id="createProChance">
+        insert into plan_project_chance(id,plan_id, create_by_id, chance, pro_id,
+        pro_name,use_sex,time,essential,pro_gdp)
+        values
+        <foreach collection="createChanceVos" item="createChanceVo" separator=",">
+            (#{createChanceVo.id},#{createChanceVo.planId}, #{createChanceVo.createById}, #{createChanceVo.chance},
+            #{createChanceVo.proId},
+            #{createChanceVo.proName},#{createChanceVo.useSex},#{createChanceVo.time},#{createChanceVo.essential},#{createChanceVo.proGdp})
+        </foreach>
+    </insert>
+    <insert id="addBatchUseOrg">
+        insert into ell_use_plan_department(plan_id, org_id,use_rule,parent_id,is_this)
+        values
+        <foreach collection="ellUseOrgMysql" item="ellUseOrg" separator=",">
+            (#{ellUseOrg.planId},
+            #{ellUseOrg.orgId},#{ellUseOrg.useRule},#{ellUseOrg.parentId},#{ellUseOrg.isThis})
+        </foreach>
+
+    </insert>
+    <insert id="addEllTestAppointment">
+        insert into ell_test_appointment(plan_id,create_by,begin_time,end_time,num) values
+        <foreach collection="ellTestAppointments" item="testAppointment" separator=",">
+            (#{testAppointment.planId},#{testAppointment.createBy},#{testAppointment.beginTime},#{testAppointment.endTime},#{testAppointment.num})
+        </foreach>
+    </insert>
+    <insert id="addPlanScoreOf">
+        insert into ell_plan_scores_of(plan_id,proportion_plan_id,proportion,is_this
+        <if test="createTime!=null and createTime!=''">,create_time</if>
+        <if test="updateTime!=null and updateTime!=''">,update_time</if>
+        )
+        values
+        <foreach collection="ellPlanScoresOfs" item="ellPlanScores" separator=",">
+            (#{planId},#{ellPlanScores.proportionPlanId},#{ellPlanScores.proportion},#{ellPlanScores.isThis}
+            <if test="createTime!=null and createTime!=''">,#{createTime}</if>
+            <if test="updateTime!=null and updateTime!=''">,#{updateTime}</if>)
+        </foreach>
+    </insert>
+    <insert id="addOptionalProject">
+        insert into ell_plan_pro_optional_item(plan_id, optional_pro_id, create_time,user_id)
+        values
+        <foreach collection="optionalVoList" item="optionalVo" separator=",">
+            (#{planId},#{optionalVo.proId},#{createTime},#{optionalVo.userId})
+        </foreach>
+    </insert>
+    <update id="updatePlan">
+        update ell_plan set
+        update_time=#{updateTime}
+        <if test="updatePlanVo.cusTheNumber != -1">
+            ,customize_the_number=#{updatePlanVo.cusTheNumber}
+        </if>
+        <if test="updatePlanVo.updateState!=null and updatePlanVo.updateState!=''">
+            ,plan_state=#{updatePlanVo.updateState}
+        </if>
+        <if test="updatePlanVo.planTitle !=null and  updatePlanVo.planTitle!=''">
+            ,plan_title=#{updatePlanVo.planTitle}
+        </if>
+        <if test="updatePlanVo.planAddr !=null and  updatePlanVo.planAddr!=''">
+            ,plan_addr=#{updatePlanVo.planAddr}
+        </if>
+        <if test="updatePlanVo.dateBegin !=null and  updatePlanVo.dateBegin!=''">
+            ,date_begin=#{updatePlanVo.dateBegin}
+        </if>
+        <if test="updatePlanVo.dateEnd !=null and  updatePlanVo.dateEnd!=''">
+            ,date_end=#{updatePlanVo.dateEnd}
+        </if>
+        <if test="updatePlanVo.isSubscribe !=null and  updatePlanVo.isSubscribe!=''">
+            ,is_subscribe=#{updatePlanVo.isSubscribe}
+        </if>
+        <if test="updatePlanVo.proId !=null and  updatePlanVo.proId!=''">
+            ,pro_id=#{updatePlanVo.proId}
+        </if>
+        <if test="updatePlanVo.planRemark !=null and  updatePlanVo.planRemark!=''">
+            ,plan_remark=#{updatePlanVo.planRemark}
+        </if>
+        <if test="updatePlanVo.isResurvey !=null and updatePlanVo.isResurvey !=''">
+            ,is_resurvey=#{updatePlanVo.isResurvey}
+        </if>
+        <if test="updatePlanVo.authNum !=null and updatePlanVo.authNum !=''">
+            ,auth_num=#{updatePlanVo.authNum}
+        </if>
+        <if test="updatePlanVo.isAuthentication !=null and updatePlanVo.isAuthentication !=''">
+            ,is_authentication=#{updatePlanVo.isAuthentication}
+        </if>
+        <if test="updatePlanVo.isExam !=0 and updatePlanVo.isAuthentication !=null">
+            ,is_exam=#{updatePlanVo.isExam}
+        </if>
+        <if test="updatePlanVo.isView!=0">
+            ,is_view=#{updatePlanVo.isView}
+        </if>
+        <if test="updatePlanVo.updateState==null or updatePlanVo.updateState==''">
+            ,plan_state=case when plan_state=3 and date_end>=left(#{updateTime},10) then 2
+            else plan_state
+            end
+        </if>
+        where (id=#{updatePlanVo.id} and is_delete=0)
+        <if test="updatePlanVo.updateById!=0 and updatePlanVo.updateById!=1">and
+            create_by_id=#{updatePlanVo.updateById}
+        </if>
+
+    </update>
+    <delete id="deletePlanSys">
+        delete
+        from ell_plan
+        where id = #{id}
+    </delete>
+    <delete id="deleteUseOrg">
+        delete
+        from ell_use_plan_department
+        where plan_id = #{planId}
+          and org_id = #{orgId}
+    </delete>
+    <delete id="deleteProChance">
+        delete
+        from plan_project_chance
+        where id = #{id}
+    </delete>
+    <delete id="deletePlanUseOrg">
+        delete
+        from ell_use_plan_department
+        where plan_id = #{planId}
+    </delete>
+    <delete id="deleteAllProChance">
+        delete
+        from plan_project_chance
+        where plan_id = #{planId}
+    </delete>
+    <delete id="deleteEllTestAppointment">
+        delete
+        from ell_test_appointment
+        where plan_id = #{planId}
+    </delete>
+    <delete id="deletePlanScoreOf">
+        delete
+        from ell_plan_scores_of
+        where plan_id = #{planId}
+    </delete>
+    <update id="deletePlan">
+        update ell_plan
+        set is_delete=1
+        where id = #{id}
+          and create_by_id = #{createById}
+    </update>
+    <update id="updateProChance">
+        update plan_project_chance
+        set chance=#{chance},
+        use_sex=#{useSex},
+        time=#{time},
+        essential=#{essential},
+        pro_gdp=#{proGdp}
+        where id = #{id}
+        <if test="updateById!=0 and updateById!=1">and create_by_id = #{updateById}</if>
+    </update>
+    <update id="upPlanUseOrgRule">
+        update ell_use_plan_department
+        set use_rule=#{useRule}
+        where id = #{id}
+    </update>
+
+    <update id="timingUpdatePlanState">
+        update ell_plan
+        set plan_state=3
+        where #{dateNow} > date_end
+          and plan_state = 2
+          and is_delete = 0
+    </update>
+    <select id="findProceedPlan" resultType="java.lang.Integer">
+        select count(*) from ell_plan where is_delete=0
+        <if test="orgId!=null and orgId!=''">
+            and org_id=#{orgId}
+        </if>
+        <if test="planState!=null">
+            and plan_state=#{planState}
+        </if>
+        <if test="dateBegin!=null and dateBegin!=''">
+            and #{dateBegin}>=date_begin and date_end>=#{dateBegin}
+        </if>
+
+    </select>
+    <select id="findPlan" resultType="com.eluolang.common.core.pojo.EllPlan">
+        select *
+        from ell_plan where is_delete=0
+        <if test="id!=null and id!=''">
+            and id=#{id}
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and org_id =#{orgId}
+        </if>
+        <if test="planState!=null and planState!=''">
+            and plan_state=#{planState}
+        </if>
+        <if test="isSubscribe!=null and isSubscribe!=''">
+            and is_subscribe=#{isSubscribe}
+        </if>
+    </select>
+    <select id="findPlanVideo" resultType="com.eluolang.common.core.pojo.EllPlan">
+        select *
+        from ell_plan where is_delete=0
+        <if test="id!=null and id!=''">
+            and id=#{id}
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and org_id =#{orgId}
+        </if>
+        <if test="planState!=null and planState!=''">
+            and plan_state=#{planState}
+        </if>
+        <if test="isSubscribe!=null and isSubscribe!=''">
+            and is_subscribe=#{isSubscribe}
+        </if>
+        <if test="year==0">
+            and year(date_end)=year(now())
+        </if>
+        <if test="year!=-2 and year!=0 ">
+            and year(date_end)>=year(now())-#{toYear}
+            <if test="year!=-1">
+                and year(now())-#{year}>year(date_end)
+            </if>
+        </if>
+
+    </select>
+    <select id="findIsHas" resultType="java.lang.Integer">
+        select count(*)
+        from ell_use_plan_department
+        where plan_id = #{planId}
+          and org_id = #{orgId}
+    </select>
+    <!--    未优化-->
+    <!-- <select id="findOrgPlan" resultType="com.eluolang.physical.model.EllPlanVo">
+         select a.*,
+                c.nickname as authName
+         from ell_plan a
+                  left join ell_use_plan_department b on a.id = b.plan_id
+                  left join pf_operator c on c.id = a.create_by_id
+         where a.create_by_id = #{accountOrgId}
+             and a.is_exam = #{isExam}
+             and a.is_delete = 0
+            or a.is_exam = #{isExam}
+             and a.is_delete = 0
+             and b.org_id in (select rat
+                              from pf_operator_rat
+                              where opt_id = #{accountOrgId}
+                                and `module` = 2)
+            or a.is_exam = #{isExam}
+             and a.is_delete = 0
+             and a.create_by_id in (SELECT id
+                                    FROM pf_operator
+                                    WHERE path like
+                                          concat((SELECT path FROM pf_operator WHERE id = #{accountOrgId}), '%'))
+         GROUP BY a.id
+     </select>-->
+    <!--    优化后-->
+    <select id="findOrgPlan" resultType="com.eluolang.physical.model.EllPlanVo">
+        select a.*,
+        c.nickname as authName
+        from ell_plan a
+        left join ell_use_plan_department b on a.id = b.plan_id
+        left join pf_operator c on c.id = a.create_by_id
+        where a.is_exam = #{isExam}
+        and a.is_delete = 0
+        and (a.create_by_id = #{accountOrgId}
+        or (a.plan_state >= 2 and (
+        b.org_id in (select rat
+        from pf_operator_rat
+        where opt_id = #{accountOrgId}
+        and `module` = 2)
+        or a.create_by_id in (SELECT id
+        FROM pf_operator
+        WHERE path like
+        concat((SELECT path FROM pf_operator WHERE id = #{accountOrgId}), '%'))
+        ))
+        )
+        <if test="status!=null">
+            and a.plan_state=#{status}
+        </if>
+        <if test="plan_addr!=null">
+            and a.plan_addr=#{planAddrs}
+        </if>
+        GROUP BY a.id
+        order by a.plan_state,a.create_time desc
+    </select>
+    <select id="findProChance" resultType="com.eluolang.common.core.pojo.EllPlanProjectChance">
+        select ppc.*,etp.pro_name_abbreviation,etp.parent_id as parentId
+        from plan_project_chance ppc
+        left join ell_test_project etp on etp.id=ppc.pro_id
+        where ppc.plan_id = #{planId}
+        <if test="!isFindEyes">
+            and ppc.pro_name!='视力'
+        </if>
+    </select>
+    <select id="isHasPlanChance" resultType="com.eluolang.common.core.pojo.EllPlanProjectChance">
+        select *
+        from plan_project_chance
+        where plan_id = #{planId}
+          and pro_id = #{proId}
+    </select>
+    <select id="findPlanUseOrg" resultType="com.eluolang.common.core.pojo.EllUseOrg">
+        select eupd.plan_id,eupd.org_id,eupd.use_rule,eupd.id,eupd.parent_id,pd.dept_name
+        from ell_use_plan_department eupd
+        left join pf_depart pd on pd.id=eupd.org_id
+        where plan_id = #{planId}
+        <if test="type!=0">and is_this = 1</if>
+
+    </select>
+    <select id="findPlanIssue" resultType="java.lang.Integer">
+        select count(*)
+        from ell_plan a
+        left join ell_use_plan_department b on b.org_id = #{orgId}
+        where (a.org_id = #{orgId} and is_delete = 0
+        or a.id = b.plan_id)
+        and a.plan_state = 2
+        <if test="planId!=null and planId!=''">
+            and b.plan_id!= #{planId}
+        </if>
+    </select>
+    <select id="findPro" resultType="java.lang.Integer">
+        select count(*)
+        from plan_project_chance
+        where plan_id = #{planId}
+          and essential = 1
+          and (use_sex like concat('%', #{useSex}, '%'))
+    </select>
+    <select id="findOrgPlanByName" resultType="java.lang.Integer">
+
+    </select>
+    <select id="findAppointment" resultType="com.eluolang.common.core.pojo.EllTestAppointment">
+        select *
+        from ell_test_appointment
+        where plan_id = #{planId};
+    </select>
+    <select id="findEllPlanScoreOf" resultType="com.eluolang.physical.model.EllPlanScoresOfVo">
+        select *
+        from ell_plan_scores_of
+        where plan_id = #{planId}
+    </select>
+    <select id="findOptionalProject" resultType="com.eluolang.physical.model.FindOptionalProjectVo">
+        select a.plan_id, a.pro_id, a.pro_name, a.use_sex, b.customize_the_number
+        from plan_project_chance a
+        left join ell_plan b on b.id = #{planId}
+        where a.plan_id = #{planId}
+        and essential = 2
+        <if test="sex !=null and sex !=''">
+            and use_sex like concat('%', #{sex}, '%')
+        </if>
+        <if test="proId!=0">
+            and a.pro_id=#{proId}
+        </if>
+    </select>
+    <select id="findProjectOptional" resultType="com.eluolang.physical.model.EllFindSelectedPro">
+        select a.plan_id, a.pro_id, a.pro_name, a.use_sex, a.chance, b.customize_the_number
+        from plan_project_chance a
+        left join ell_plan b on b.id = #{planId}
+        left join ell_plan_pro_optional_item c on c.user_id = #{userId} and c.plan_id = #{planId}
+        <if test="proId!=0">
+            and c.optional_pro_id=#{proId}
+        </if>
+        where a.plan_id = #{planId}
+        and a.essential = 2
+        and a.pro_id = c.optional_pro_id
+    </select>
+    <select id="findSelectedNum" resultType="java.lang.Integer">
+        select count(*)
+        from ell_plan_pro_optional_item
+        where plan_id = #{planId}
+          and user_id = #{userId}
+    </select>
+    <select id="findMustProject" resultType="com.eluolang.common.core.pojo.EllPlanProjectChance">
+        select *
+        from plan_project_chance
+        where plan_id = #{planId}
+        and essential = 1
+        <if test="userSex!=null and userSex!=''">
+            and use_sex like concat('%', #{userSex}, '%')
+        </if>
+        order by id
+    </select>
+    <select id="selClassPeopleNum" resultType="java.lang.Integer">
+        select count(id)
+        from ell_user
+        where org_id in(
+        <foreach collection="ellUseOrgs" item="ellUserOrg" index="index" separator=",">
+            #{ellUserOrg.orgId}
+        </foreach>
+        ) and is_delete=0
+    </select>
+    <delete id="deletePlanUser">
+        delete
+        from ell_plan_user
+        where plan_id = #{planId}
+    </delete>
+    <delete id="deleteUseDep">
+        delete
+        from ell_use_plan_department
+        where plan_id = #{planId}
+    </delete>
+    <delete id="deleteAvoidPro">
+        delete
+        from ell_avoid_project
+        where avoid_test_id in (select id from ell_avoid_test where plan_id = #{planId})
+    </delete>
+    <delete id="deleteAvoid">
+        delete
+        from ell_avoid_test
+        where plan_id = #{planId}
+    </delete>
+    <delete id="deleteUseOrgId">
+        delete
+        from ell_use_plan_department
+        where plan_id = #{planId} and
+        org_id in (
+        <foreach collection="ellUseOrgs" separator="," index="index" item="ellUse">
+            #{ellUse.orgId}
+        </foreach>
+        )
+    </delete>
+    <delete id="deleteAllUseOrg">
+        delete
+        from ell_use_plan_department
+        where plan_id = #{planId}
+    </delete>
+    <select id="selPfDepart" resultType="com.eluolang.physical.model.EllUseOrgVo">
+        select id as orgId, dept_name as orgName, parent_id
+        from pf_depart
+        where path like concat((SELECT path FROM pf_depart WHERE id = #{orgId}), '%')
+        ORDER BY path asc
+    </select>
+    <select id="selPlanDepart" resultType="com.eluolang.physical.dto.DepartTreeDto">
+        select *
+        from pf_depart
+        where
+        path like concat(
+        (select path
+        from pf_depart
+        where id=#{orgId})
+        ,'%')
+        <if test="accountId!=1 and accountId!=0">
+            and id in (select rat from pf_operator_rat where opt_id=#{accountId})
+        </if>
+        and id in (select org_id
+        from ell_use_plan_department
+        where plan_id = #{planId})
+        order by path asc
+    </select>
+    <select id="selPlanUseDepartment" resultType="com.eluolang.common.core.pojo.EllUserPlanDepartment">
+        select *
+        from ell_use_plan_department
+        where plan_id = #{planId} and is_this=1
+        <if test="accountId!=1 and accountId!=0">
+            and org_id in (select rat from pf_operator_rat where opt_id=#{accountId})
+        </if>
+    </select>
+    <select id="selPlan" resultType="com.eluolang.common.core.pojo.EllPlan">
+        select *
+        from ell_plan
+        where id = #{planId}
+    </select>
+    <select id="selOptionPeopleNum" resultType="java.lang.Integer">
+        select count(optional_pro_id)
+        from ell_plan_pro_optional_item
+        where plan_id = #{planId}
+          and optional_pro_id = #{proId}
+    </select>
+    <select id="selVideoUser" resultType="com.eluolang.physical.model.EllVideoVo">
+        select fm.*, etp.pro_name, eu.student_code, eu.user_name
+        from file_mgr fm
+                 left join ell_grade_video egv on egv.user_id = #{userId} and egv.plan_id = #{planId}
+                 left join ell_test_project etp on etp.id = egv.project_id
+                 left join ell_user eu on eu.id = #{userId}
+        where fm.id = egv.file_id
+    </select>
+    <select id="selHistory" resultType="com.eluolang.common.core.pojo.EllTestHistory">
+        select *
+        from ell_test_history
+        where plan_id = #{planId}
+        group by user_id
+    </select>
+    <select id="selDepartById" resultType="com.eluolang.physical.dto.DepartTreeDto">
+        select *
+        from pf_depart
+        where id = #{id}
+    </select>
+    <select id="selPlanTotalNum" resultType="java.lang.Integer">
+        select IF(count(a.id) is null, 0, count(a.id))
+        from ell_user a
+                 left join ell_use_plan_department b on b.plan_id = #{planId}
+        where a.org_id = b.org_id
+          and a.is_delete = 0
+    </select>
+    <select id="selPlanStatusNum" resultType="com.eluolang.physical.model.EllPlanStatusNumVo">
+        select IF(count(DISTINCT a.id) IS NULL,0,count(DISTINCT a.id)) as num ,a.plan_state as status
+        from ell_plan a
+        left join ell_use_plan_department b on a.id = b.plan_id
+        left join pf_operator c on c.id = a.create_by_id
+        where a.is_exam = #{isExam}
+        and a.is_delete = 0
+        and (a.create_by_id = #{accountOrgId}
+        or (a.plan_state >= 2 and (
+        b.org_id in (select rat
+        from pf_operator_rat
+        where opt_id = #{accountOrgId}
+        and `module` = 2)
+        or a.create_by_id in (SELECT id
+        FROM pf_operator
+        WHERE path like
+        concat((SELECT path FROM pf_operator WHERE id = #{accountOrgId}), '%'))
+        ))
+        )
+        <if test="status!=null">
+            and a.plan_status=#{status}
+        </if>
+        GROUP BY a.plan_state
+        order by a.plan_state
+    </select>
+</mapper>

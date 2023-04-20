@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.playground.mapper.WisdomIndividualFileMapper">
+    <select id="selTestRulesScore" resultType="com.eluolang.common.core.pojo.EllTestRulesScore">
+        select *
+        from ell_test_rules_score etrs
+                 left join ell_constitution_rules ecr
+                           on ecr.school_id = #{schoolId} and ecr.grade = #{grade}
+                 left join ell_test_rules etr
+                           on etr.parent_id = ecr.rules_id and etr.pro_id = #{proId}
+        where etrs.parent_id = etr.id
+    </select>
+    <select id="selUserById" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where id = #{id}
+          and is_delete = 0
+    </select>
+    <select id="selRunMileage" resultType="com.eluolang.playground.dto.EllStudentGradeDto">
+        select (sum(mileage) / 1000) as dataGrade, @rank := @rank + 1 AS rank,'跑步里程' as proName,'公里' as unit
+        from (SELECT @rank := 0) r, ell_daily_history
+        where user_id = #{userId}
+    </select>
+    <select id="selStudentData" resultType="com.eluolang.playground.dto.EllProScoreDto">
+        SELECT SUM(ech.data) as sumScore,
+               min(ech.data) as minScore,
+               max(ech.data) as
+                                maxScore,
+               ech.pro_name,
+               eu.user_name,
+               etp.pro_unit  as unit,
+               eu.user_sex,
+               eu.id         as userId,
+               ech.pro_id
+        FROM ell_class_history ech
+                 left join ell_user eu on eu.id = ech.user_id and eu.is_delete = 0
+                 LEFT JOIN ell_test_project etp on etp.id = ech.pro_id
+        WHERE to_days(ech.create_time) >= to_days(NOW()) - #{dayNum}
+          and ech.user_id = #{userId}
+        GROUP BY ech.pro_id
+    </select>
+    <select id="selBetterThanGradeNum" resultType="java.lang.Integer">
+        select count(DISTINCT user_id)
+        from ell_class_history
+        where pro_id = #{proId}
+        <if test="type==1">
+            and data>=#{grade}
+        </if>
+        <if test="type==2">
+            and #{grade}>=data
+        </if>
+    </select>
+    <select id="selWeekRun" resultType="java.lang.Integer">
+        select sum(mileage)
+        FROM ell_daily_history
+        where location_time >= #{time}
+          and user_id = #{userId}
+    </select>
+    <select id="selUser" resultType="com.eluolang.playground.dto.EllIndividualUserDto">
+        select eu.*, pd.dept_name as className
+        from ell_user eu
+                 left join pf_depart pd on pd.id = eu.org_id
+        where eu.id = #{userId}
+    </select>
+    <select id="selPlanScore" resultType="com.eluolang.playground.dto.EllEndScoreDto">
+        select end_score, DATE_FORMAT(create_time, '%Y-%m-%d') as planTestTime
+        from ell_plan_end_score
+        where user_id = #{userId}
+        order by create_time
+    </select>
+    <select id="selClassGrade" resultType="com.eluolang.playground.dto.EllClassGradeDto">
+        select data as dataGrade, DATE_FORMAT(create_time, '%Y-%m-%d') as testTime
+        from ell_class_history
+        where user_id =#{userId} and pro_id in(
+        <foreach collection="gradeDay" item="proId" separator=",">
+            #{proId.proId}
+        </foreach>
+        )
+    </select>
+    <select id="selTestPro" resultType="com.eluolang.playground.dto.EllClassGradeDayDto">
+        SELECT pro_id, pro_name
+        from ell_class_history
+        where user_id = #{userId}
+        group by pro_id
+    </select>
+    <select id="selEyesInfo" resultType="com.eluolang.playground.dto.EllEyesInfoDto">
+        select DATE_FORMAT(create_time, '%Y-%m-%d') as testTime,
+               left_vision,
+               right_vision,
+               left_diopter_sph                     as leftDiopter,
+               right_diopter_sph                    as rightDiopter
+        from ell_eyesight_particulars
+        where user_id = #{userId}
+        GROUP BY create_time DESC LIMIT 15
+    </select>
+    <select id="selLastOneProHistory" resultType="com.eluolang.common.core.pojo.EllClassHistory">
+        select ech.*
+        from ell_class_history ech
+                 LEFT JOIN (select * from ell_class_history) t on t.user_id = #{userId} and
+                                                                  t.create_time = (select max(create_time)
+                                                                                   from ell_class_history
+                                                                                   WHERE pro_id = ech.pro_id)
+        where ech.id = t.id
+    </select>
+    <select id="selSuggestion" resultType="com.eluolang.playground.dto.EllSuggestionDto">
+        select *
+        from ell_sport_config_rule
+        where pro_id = #{proId}
+    </select>
+</mapper>

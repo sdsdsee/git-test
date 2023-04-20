@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.playground.mapper.PlayGroundMapper">
+
+    <select id="selLocationDataIsExist" resultType="java.lang.Integer">
+        select count(id)
+        from ell_daily_history
+        where mac = #{mac}
+          and location_time = #{locationTime}
+    </select>
+
+    <insert id="addDailyHistoryList">
+        insert into ell_daily_history (id,mileage,daily_id,`type`,mac,user_id,create_time,
+        location,location_time,heart_rate,temperature,oxygen,
+        measure_time,step,battery,sos,wristband_status) values
+        <foreach collection="ellDailyHistoryList" item="item" separator=",">
+            (#{item.id},#{item.mileage},#{item.dailyId},#{item.type},#{item.mac},#{item.userId}
+            ,NOW(),#{item.location},#{item.locationTime},#{item.heartRate},#{item.temperature}
+            ,#{item.oxygen},#{item.measureTime},#{item.step},#{item.battery},#{item.sos},#{item.wristbandStatus})
+        </foreach>
+    </insert>
+
+    <select id="selDailyHistoryByLocationTime" resultType="com.eluolang.playground.vo.EllDailyHistoryVo">
+        select edh.id,
+               edh.mileage,
+               edh.daily_id,
+               edh.`type`,
+               edh.mac,
+               edh.user_id,
+               edh.location,
+               edh.location_time,
+               edh.heart_rate,
+               edh.temperature,
+               edh.oxygen,
+               edh.measure_time,
+               edh.step
+        from ell_daily_history edh
+                 left join ell_user eu on edh.user_id = eu.id
+        where eu.is_delete = 0
+          and edh.daily_id = #{dailyId}
+          and edh.user_id = #{userId}
+          and edh.location_time > #{locationTime}
+        ORDER BY edh.location_time DESC LIMIT 40
+    </select>
+
+    <select id="selMileageSumByUserId" resultType="com.eluolang.playground.vo.CurrentRunningDetailsVo">
+        select eu.id as userId, eu.user_name, IFNULL(sum(edh.mileage) / 1000, 0) as mileageSum
+        from ell_daily_history edh
+                 LEFT JOIN ell_user eu on edh.user_id = eu.id
+        where edh.daily_id = #{dailyId}
+          and edh.user_id = #{userId}
+          and eu.is_delete = 0
+    </select>
+
+    <select id="selDailyPlanById" resultType="com.eluolang.common.core.pojo.EllDailyExercisePlan">
+        select *
+        from ell_daily_exercise_plan
+        where id = #{id}
+    </select>
+
+    <select id="selPlanTotalNum" resultType="java.lang.Integer">
+        select COUNT(id)
+        from ell_user
+        where org_id in (select id
+                         from pf_depart
+                         where path like concat((select path
+                                                 from pf_depart
+                                                 where id = (select use_orgId from ell_daily_exercise_plan where id = #{dailyId})),
+                                                '%'))
+          and is_delete = 0
+    </select>
+
+    <select id="selDailyTimeQuantum" resultType="com.eluolang.common.core.pojo.EllDailyTimeQuantum">
+        select *
+        from ell_daily_time_quantum
+        where daily_id = #{dailyId}
+    </select>
+
+    <!--根据设备id查询日常锻炼计划详情-->
+    <select id="selExercisePlan" resultType="com.eluolang.common.core.pojo.EllDailyExercisePlan">
+        select edep.*
+        from ell_daily_exercise_plan edep
+                 LEFT JOIN ell_device ed on edep.use_orgId = ed.dept_id
+        where ed.device_id = #{deviceId}
+    </select>
+
+    <select id="selStandardNum" resultType="com.eluolang.playground.vo.StandardNumVo">
+        select count(CASE when b.user_sex = 1 and b.mileage > #{mileage} then b.mileage END) as standardMan,
+               count(CASE when b.user_sex = 2 and b.mileage > #{mileage} then b.mileage END) as standardWoman,
+               count(CASE when b.mileage > #{mileage} then b.mileage END)                    as standardTotal
+        from (select eu.id, eu.user_sex, sum(edh.mileage) as mileage
+              from (select id
+                    from pf_depart
+                    where path like concat((select path
+                                            from pf_depart
+                                            where id = (select use_orgId from ell_daily_exercise_plan where id = #{dailyId})),
+                                           '%')) edpud
+                       LEFT JOIN ell_user eu on edpud.id = eu.org_id
+                       LEFT JOIN ell_daily_history edh on eu.id = edh.user_id
+              where eu.is_delete = 0
+                and edh.location_time BETWEEN #{startTime} and #{endTime}
+              GROUP BY eu.id) b
+    </select>
+
+    <select id="findDeviceInfo" resultType="com.eluolang.playground.vo.EllDeviceInfoVo">
+        select ed.device_id,
+               ed.device_name,
+               ei.id as infoId,
+               ei.info_type,
+               ei.text,
+               ei.info_title,
+               fm.file_url
+        from ell_smart_device_management ed
+                 left join ell_info_publish_target eipt on eipt.device_id = ed.id
+                 left join ell_information ei on ei.id = eipt.info_id and ei.is_delete = 0
+                 left join ell_info_file eif on ei.id = eif.info_id
+                 left join file_mgr fm on fm.id = eif.file_id
+        where ed.device_id = #{deviceId}
+          and ei.info_type = 3
+          and ed.is_delete = 0
+    </select>
+
+    <select id="selRunningData" resultType="com.eluolang.playground.vo.RunningDataVo">
+        select COUNT(DISTINCT edh.user_id) as times,SUM(edh.mileage)/1000 as mileage,
+        FROM_UNIXTIME(edh.location_time/1000,'%Y-%m-%d') as date from ell_daily_history edh
+        LEFT JOIN ell_daily_exercise_plan edep on edh.daily_id = edep.id
+        where edep.use_orgId in
+        (
+        <foreach collection="deptIdList" item="item" index="index" separator=",">
+            #{item}
+        </foreach>
+        )
+        and DATE_SUB(CURDATE(), INTERVAL 30 DAY) &lt;= FROM_UNIXTIME(edh.location_time/1000,'%Y-%m-%d')
+        GROUP BY FROM_UNIXTIME(edh.location_time/1000,'%Y-%m-%d')
+    </select>
+
+    <select id="selTotalSportNumber" resultType="com.eluolang.playground.vo.TotalSportNumberVo">
+        select #{date}                                  as `date`,
+               count(DISTINCT CASE
+                                  when FROM_UNIXTIME(location_time / 1000, '%Y-%m-%d') = #{date}
+                                      then user_id end) as number
+        from ell_daily_history
+        where daily_id = #{dailyId}
+    </select>
+
+    <select id="selRankByUserId" resultType="com.eluolang.playground.vo.MonthRunDataVo">
+        SET
+        @crank = 0;
+        select c.user_id as user_id, c.a / 1000 as finishMileage, c.rank
+        from (SELECT b.user_id, b.a, @crank:=@crank+1 AS rank
+              FROM
+                  (SELECT edh.user_id, SUM (edh.mileage) AS a FROM ell_daily_history edh left join ell_user eu on edh.user_id = eu.id where eu.is_delete = 0 and
+                  edh.daily_id = #{dailyId} and FROM_UNIXTIME(edh.location_time/1000, '%Y-%m') = #{month} GROUP BY edh.user_id ORDER BY a DESC) b) c
+        where c.user_id = #{userId};
+    </select>
+
+    <select id="selMileageStandard" resultType="java.lang.Integer">
+        select IFNULL(sum(edh.mileage), 0)
+        from ell_daily_history edh
+                 left join ell_user eu on edh.user_id = eu.id
+        where eu.is_delete = 0
+          and edh.daily_id = #{dailyId}
+          and edh.user_id = #{userId}
+          and FROM_UNIXTIME(edh.location_time / 1000, '%Y-%m') = #{month}
+    </select>
+
+    <select id="selHeartRateInterval" resultType="com.eluolang.playground.vo.EllDailyHistoryVo">
+        select edh.*
+        from ell_daily_history edh
+        left join ell_user eu on edh.user_id = eu.id
+        where edh.user_id = #{userId}
+        and eu.is_delete = 0
+        and FROM_UNIXTIME(edh.location_time / 1000, '%Y-%m-%d') = #{day}
+        <if test="dailyId!=null and dailyId!=''">and edh.daily_id = #{dailyId}</if>
+        order by edh.location_time
+    </select>
+
+    <select id="selCurrentUserRunData" resultType="com.eluolang.playground.vo.CurrentUserRunDataVo">
+        select eu.id                             as userId,
+               eu.user_name,
+               pd.dept_name                      as className,
+               IFNULL(MIN(edh.location_time), 0) as startTime,
+               IFNULL(MAX(edh.location_time), 0) as endTIme,
+               IFNULL(SUM(edh.mileage), 0)       as mileage
+        from ell_daily_history edh
+                 LEFT JOIN ell_user eu on edh.user_id = eu.id
+                 LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        where edh.daily_id = #{dailyId}
+          and eu.is_delete = 0
+          and edh.user_id = #{userId}
+          and edh.location_time BETWEEN UNIX_TIMESTAMP(#{startTime}) * 1000 and UNIX_TIMESTAMP(#{endTime}) * 1000
+    </select>
+    <select id="selLocationTime" resultType="com.eluolang.playground.vo.GetLocationTimeVo">
+        SET
+        @crank = 0;
+        select c.user_id as user_id, c.location, c.location_time, c.rank
+        from (SELECT b.user_id, b.a, b.location, b.location_time, @crank:=@crank+a AS rank
+              FROM
+                  (SELECT edh.user_id, edh.location, edh.location_time, edh.mileage AS a FROM ell_daily_history edh LEFT JOIN ell_user eu on edh.user_id = eu.id where eu.is_delete = 0 and
+                  edh.daily_id = #{dailyId} and edh.user_id = #{userId} and edh.location_time BETWEEN UNIX_TIMESTAMP(#{startTime})*1000 and UNIX_TIMESTAMP(#{endTime})*1000 ORDER BY edh.location_time) b) c
+        where rank = #{rank};
+    </select>
+    <select id="selCurrentRunData" resultType="com.eluolang.playground.vo.EllDailyHistoryVo">
+        select edh.*
+        from ell_daily_history edh
+                 left join ell_user eu on edh.user_id = eu.id
+        where eu.is_delete = 0
+          and edh.daily_id = #{dailyId}
+          and edh.user_id = #{userId}
+          and edh.location_time BETWEEN UNIX_TIMESTAMP(#{startTime}) * 1000 and UNIX_TIMESTAMP(#{endTime}) * 1000
+        ORDER BY edh.location_time
+    </select>
+
+    <select id="selUserRunRank" resultType="com.eluolang.playground.vo.RunningRankVo">
+        SET
+        @crank = 0;
+        select #{date} as `date`, c.user_id as user_id, c.a as finishMileage, c.rank
+        from (SELECT b.user_id, b.a, @crank:=@crank+1 AS rank
+              FROM
+                  (SELECT edh.user_id, SUM (edh.mileage) AS a FROM ell_daily_history edh LEFT JOIN ell_user eu on edh.user_id = eu.id where eu.is_delete = 0 and
+                  edh.daily_id = #{dailyId} and FROM_UNIXTIME(edh.location_time/1000, '%Y-%m-%d') = #{date} and eu.org_id = #{deptId} GROUP BY user_id ORDER BY a DESC) b) c
+        where c.user_id = #{userId};
+    </select>
+
+    <select id="selUserRunRankBySchool" resultType="com.eluolang.playground.vo.RunningRankVo">
+        SET
+        @crank = 0;
+        select #{date} as `date`, c.user_id as user_id, c.a as finishMileage, c.rank
+        from (SELECT b.user_id, b.a, @crank:=@crank+1 AS rank
+              FROM
+                  (SELECT edh.user_id, SUM (edh.mileage) AS a FROM ell_daily_history edh LEFT JOIN ell_user eu on edh.user_id = eu.id where
+                  eu.is_delete = 0 and edh.daily_id = #{dailyId} and FROM_UNIXTIME(edh.location_time/1000, '%Y-%m-%d') = #{date} and eu.org_id in
+                  (select id from pf_depart where path like concat((SELECT path from pf_depart where FIND_IN_SET(id, getParentList(#{deptId}))
+                  and is_school = 1), '%')) GROUP BY user_id ORDER BY a DESC) b) c
+        where c.user_id = #{userId};
+    </select>
+    <select id="selUserById" resultType="com.eluolang.common.core.pojo.EllUser">
+        select *
+        from ell_user
+        where id = #{userId}
+          and is_delete = 0
+    </select>
+    <select id="selTestProject" resultType="com.eluolang.common.core.pojo.EllTestProject">
+        select *
+        from ell_test_project
+        where pro_name_abbreviation = #{name}
+    </select>
+    <select id="runSituationAnalyse" resultType="com.eluolang.playground.vo.EllDailyHistoryVo">
+        select edh.*
+        from ell_daily_history edh
+                 left join ell_user eu on edh.user_id = eu.id
+        where eu.is_delete = 0
+          and edh.daily_id = #{dailyId}
+          and edh.user_id = #{userId}
+          and FROM_UNIXTIME(edh.location_time / 1000, '%Y-%m-%d') = #{date}
+        ORDER BY edh.location_time
+    </select>
+    <select id="selUserMessageById" resultType="com.eluolang.playground.vo.UserCallVo">
+        select eu.id as userId, eu.user_name, eu.student_id as studentId, pd.dept_name as className
+        from ell_user eu
+                 LEFT JOIN pf_depart pd on eu.org_id = pd.id
+        where eu.id = #{userId}
+          and eu.is_delete = 0
+    </select>
+    <select id="selDailyIdByOrgId" resultType="java.lang.String">
+        select id
+        from ell_daily_exercise_plan
+        where use_orgId = #{orgId}
+    </select>
+    <select id="selSignUserByCode" resultType="com.eluolang.common.core.pojo.EllUser">
+        select eu.*
+        from ell_user eu
+                 LEFT JOIN img_user_relevance iur on eu.id = iur.user_id
+        where iur.megvii_image_id = #{imgId}
+          and eu.is_delete = 0
+    </select>
+
+    <select id="selPlanDataById" resultType="com.eluolang.common.core.pojo.EllDailyExercisePlan">
+        select *
+        from ell_daily_exercise_plan
+        where use_orgId = (select id
+                           from pf_depart as a,
+                                (select getParentList(#{deptId}) ids) as b
+                           where FIND_IN_SET(id, ids)
+                             and is_school = 1)
+    </select>
+</mapper>

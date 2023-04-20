@@ -1,0 +1,41 @@
+# Tomcat
+server:
+  port: 9600
+# Spring
+spring:
+  application:
+    # 应用名称
+    name: ELL-information-delivery
+  profiles:
+    # 环境配置
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+        # 配置文件格式
+        file-extension: yml
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+        # 共享配置
+        shared-dataids: application.${spring.cloud.nacos.config.file-extension}
+  servlet:
+    multipart:
+      #开启multipart上传功能
+      enabled: true
+      #文件写入磁盘的阈值
+      file-size-threshold: 2KB
+      #上传最大文件大小
+      max-file-size: 200MB
+      #最大请求文件大小
+      max-request-size: 200MB
+#日志
+logging:
+  level:
+    com.eluolang.device.mapper: info

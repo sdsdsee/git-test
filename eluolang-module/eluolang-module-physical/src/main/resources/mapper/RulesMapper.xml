@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.RulesMapper">
+    <insert id="addRules">
+        insert into ell_test_rules_score(sex, grade, project_id, rule, rule_score, create_time, project_name, org_id,
+        rule_name, remark, is_delete, parent_id) values
+        <foreach collection="projectRules" item="item" index="index" separator=",">
+            (#{item.sex}, #{item.grade}, #{item.projectId}, #{item.rule},
+            #{item.ruleScore}, #{item.createTime}, #{item.projectName},
+            #{item.orgId}, #{item.ruleName}, #{item.remark}, 0,
+            #{item.parentId})
+        </foreach>
+    </insert>
+    <!--   <foreach collection="createChanceVos" item="createChanceVo" separator=",">
+            values (#{createChanceVo.planId}, #{createChanceVo.createById}, #{createChanceVo.chance},
+            #{createChanceVo.proId}, #{createChanceVo.proName})
+        </foreach>-->
+    <insert id="createRule" keyProperty="id" keyColumn="id">
+        insert into ell_test_rules(rule_name,create_by_id,pro_id
+        <if test="ruleVo.parentId!=null and ruleVo.parentId!=''">
+            , parent_id
+        </if>)
+        values (#{ruleVo.ruleName},#{ruleVo.createById},#{ruleVo.proId}
+        <if test="ruleVo.parentId!=null and ruleVo.parentId!=''">
+            , #{ruleVo.parentId}
+        </if>)
+    </insert>
+
+    <update id="updataRules">
+        update ell_test_rules_score set
+        updata_time=#{date}
+        <if test="rulesVo.sex!=null and rulesVo.sex!=''">
+            ,sex=#{rulesVo.sex}
+        </if>
+        <if test="rulesVo.grade!=null and rulesVo.grade!=''">
+            ,grade=#{rulesVo.grade}
+        </if>
+        <if test="rulesVo.rule!=null and rulesVo.rule!=''">
+            ,rule=#{rulesVo.rule}
+        </if>
+        <if test="rulesVo.ruleScore!=null and rulesVo.ruleScore!=''">
+            , rule_score=#{rulesVo.ruleScore}
+        </if>
+        <if test="rulesVo.ruleName!=null and rulesVo.ruleName!=''">
+            , rule_name=#{rulesVo.ruleName}
+        </if>
+        <if test="rulesVo.remark!=null and rulesVo.remark!=''">
+            ,remark=#{rulesVo.remark}
+        </if>
+        <if test="rulesVo.chance!=null and rulesVo.chance!=''">
+            ,chance=#{rulesVo.chance}
+        </if>
+        where id=#{rulesVo.id} and is_delete=0 and (select create_by_id from ell_test_rules where
+        id=#{rulesVo.updateByCroupId})=#{rulesVo.updateById}
+    </update>
+    <update id="updateGroupUseTime">
+        update ell_test_rules
+        set use_time=#{useTime}
+        where id = #{id}
+    </update>
+    <delete id="deleteRuleSys">
+        delete
+        from ell_test_rules_score a
+        where id = #{id}
+          and (select count())
+    </delete>
+    <delete id="delScoreRule">
+        delete
+        from ell_test_rules_score
+        where parent_id = #{parentId}
+          and sex = #{sex}
+    </delete>
+    <select id="findRules" resultType="com.eluolang.common.core.pojo.EllTestRulesScore">
+        select *
+        from ell_test_rules_score a
+        left join ell_test_rules b on b.parent_id=#{parentId}
+        where is_delete = 0
+        <if test="id!=null and id!=''">
+            and a.id=#{id}
+        </if>
+        <if test="orgId!=null and orgId!=''">
+            and a.org_id = #{orgId}
+            or (a.org_id = null and a.org_id = '') and a.is_delete = 0
+        </if>
+        <if test="proId!=null and proId!=''">
+            and a.project_id=#{proId}
+        </if>
+        <if test="ruleName!=null and ruleName!=''">
+            and a.rule_name=#{ruleName}
+        </if>
+        <if test="parentId!=null and parentId!=''">
+            and a.parent_id=#{parentId} or a.parent_id=b.id
+        </if>
+        <if test="sex!=null and sex!=''">
+            and a.sex =#{sex}
+        </if>
+    </select>
+    <select id="findRulesSys" resultType="com.eluolang.common.core.pojo.EllTestRulesScore">
+        select *
+        from ell_test_rules_score
+        where is_delete = 0
+    </select>
+    <select id="findEllRule" resultType="com.eluolang.physical.model.EllTestRulesVo">
+        select * from ell_test_rules etr LEFT JOIN ell_test_project etp on etr.pro_id = etp.id
+        <if test="id!=null and id!=0">
+            where etr.id=#{id}
+        </if>
+    </select>
+    <select id="findGroup" resultType="java.lang.Integer">
+        select count(*)
+        from ell_test_rules
+        where rule_name = #{groupName}
+    </select>
+    <select id="findOrgRule" resultType="com.eluolang.physical.model.EllScoreRule">
+        select a.*
+        from ell_test_rules_score a
+                 left join ell_user b on b.id = #{userId} and b.is_delete = 0
+                 left join ell_use_plan_department c on b.org_id = c.org_id and c.plan_id = #{planId}
+                 left join ell_test_rules d on d.parent_id = c.use_rule and d.pro_id = #{proId}
+        where a.parent_id = d.id
+          and b.user_sex = a.sex
+    </select>
+    <select id="selScoreRule" resultType="com.eluolang.common.core.pojo.EllTestRulesScore">
+        select *
+        from ell_test_rules_score
+        where parent_id = #{rulesId}
+          and sex = #{sex}
+        order by rule_score
+    </select>
+
+</mapper>

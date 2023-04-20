@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.physical.mapper.SkipContestMapper">
+
+    <insert id="addContest">
+        insert into ell_skip_contest(id, con_title, con_matter, con_pattern, con_content, is_delete, create_time,
+                                     con_state, con_begin_time, con_end_time, reg_begin_time, reg_end_time,
+                                     content_unit, prize, create_by)
+        values (#{ellSkipContest.id}, #{ellSkipContest.conTitle}, #{ellSkipContest.conMatter},
+                #{ellSkipContest.conPattern}, #{ellSkipContest.conContent}, 0, #{ellSkipContest.createTime}, 1,
+                #{ellSkipContest.conBeginTime}, #{ellSkipContest.conEndTime}, #{ellSkipContest.regBeginTime},
+                #{ellSkipContest.regEndTime}, #{ellSkipContest.contentUnit}, #{ellSkipContest.prize},
+                #{ellSkipContest.createBy})
+    </insert>
+    <insert id="addSkipHomework">
+        insert into ell_skip_homework(id, work_name, work_place, finish_modality, work_pattern, work_content,
+        work_setting, teacher_name,create_time,begin_time,end_time,state,use_org_id,create_by)
+        values
+        <foreach collection="ellSkipHomeworkList" item="ellSkipHomework" index="index" separator=",">
+            (#{ellSkipHomework.id}, #{ellSkipHomework.workName}, #{ellSkipHomework.workPlace},
+            #{ellSkipHomework.finishModality}, #{ellSkipHomework.workPattern}, #{ellSkipHomework.workContent},
+            #{ellSkipHomework.workSetting},#{ellSkipHomework.teacherName},#{ellSkipHomework.createTime},
+            #{ellSkipHomework.beginTime},#{ellSkipHomework.endTime},#{ellSkipHomework.state},#{ellSkipHomework.useOrgId},#{ellSkipHomework.createBy})
+        </foreach>
+    </insert>
+    <update id="updateContest">
+        update ell_skip_contest set
+        update_time=#{ellUpdateSkipContestVo.updateTime}
+        <if test="ellUpdateSkipContestVo.conTitle!='' and ellUpdateSkipContestVo.conTitle!=null">
+            ,con_title=#{ellUpdateSkipContestVo.conTitle}
+        </if>
+        <if test="ellUpdateSkipContestVo.conMatter!='' and ellUpdateSkipContestVo.conMatter!=null">
+            ,con_matter=#{ellUpdateSkipContestVo.conMatter}
+        </if>
+        <if test="ellUpdateSkipContestVo.conPattern!='' and ellUpdateSkipContestVo.conPattern!=null">
+            ,con_pattern=#{ellUpdateSkipContestVo.conPattern}
+        </if>
+        <if test="ellUpdateSkipContestVo.conContent!=0">
+            ,con_content=#{ellUpdateSkipContestVo.conContent}
+        </if>
+        <if test="ellUpdateSkipContestVo.conState!=0">
+            ,con_state=#{ellUpdateSkipContestVo.conState}
+        </if>
+        <if test="ellUpdateSkipContestVo.conBeginTime!='' and ellUpdateSkipContestVo.conBeginTime!=null">
+            ,con_begin_time=#{ellUpdateSkipContestVo.conBeginTime}
+        </if>
+        <if test="ellUpdateSkipContestVo.conEndTime!='' and ellUpdateSkipContestVo.conEndTime!=null">
+            ,con_end_time=#{ellUpdateSkipContestVo.conEndTime}
+        </if>
+        <if test="ellUpdateSkipContestVo.regBeginTime!='' and ellUpdateSkipContestVo.regBeginTime!=null">
+            ,reg_begin_time=#{ellSkipContest.regBeginTime}
+        </if>
+        <if test="ellUpdateSkipContestVo.regEndTime!='' and ellUpdateSkipContestVo.regEndTime!=null">
+            ,reg_end_time=#{ellSkipContest.regEndTime}
+        </if>
+        <if test="ellUpdateSkipContestVo.contentUnit!='' and ellUpdateSkipContestVo.contentUnit!=null">
+            ,content_unit=#{ellUpdateSkipContestVo.contentUnit}
+        </if>
+        <if test="ellUpdateSkipContestVo.prize!='' and ellUpdateSkipContestVo.prize!=null">
+            ,prize=#{ellUpdateSkipContestVo.prize}
+        </if>
+        where id=#{ellUpdateSkipContestVo.id} and is_delete=0
+        <if test="ellUpdateSkipContestVo.conState!=0">
+            and con_state=(#{ellUpdateSkipContestVo.conState}-1)
+        </if>
+    </update>
+    <update id="timingUpdateContestState">
+        update ell_skip_contest
+        set con_state=3,
+            update_time=#{dateNow}
+        where #{dateNow} > con_end_time
+          and con_state!=3 and is_delete=0
+    </update>
+    <update id="deleteContest">
+        update ell_skip_contest
+        set is_delete=1
+        where id = #{conTestId}
+          and is_delete = 0
+    </update>
+    <update id="upHomework">
+        update ell_skip_homework set create_time=#{ellSkipHomework.createTime}
+        <if test="ellSkipHomework.workName!=null and ellSkipHomework.workName!=''">
+            ,work_name=#{ellSkipHomework.workName}
+        </if>
+        <if test="ellSkipHomework.workPlace!=null and ellSkipHomework.workPlace!=''">
+            ,work_place=#{ellSkipHomework.workPlace}
+        </if>
+        <if test="ellSkipHomework.finishModality!=null and ellSkipHomework.finishModality!=''">
+            ,finish_modality=#{ellSkipHomework.finishModality}
+        </if>
+        <if test="ellSkipHomework.workPattern!=0">
+            ,work_pattern=#{ellSkipHomework.workPattern}
+        </if>
+        <if test="ellSkipHomework.workContent!=null and ellSkipHomework.workContent!=''">
+            ,work_content=#{ellSkipHomework.workContent}
+        </if>
+        <if test="ellSkipHomework.workSetting!=0">
+            ,work_setting=#{ellSkipHomework.workSetting}
+        </if>
+        <if test="ellSkipHomework.teacherName!=null and ellSkipHomework.teacherName!=''">
+            ,teacher_name=#{ellSkipHomework.teacherName}
+        </if>
+        <if test="ellSkipHomework.useOrgId!=null and ellSkipHomework.useOrgId!=''">
+            ,use_org_id=#{ellSkipHomework.useOrgId}
+        </if>
+        <if test="ellSkipHomework.state!=0">
+            ,state=#{ellSkipHomework.state}
+        </if>
+        <if test="ellSkipHomework.beginTime!=null and ellSkipHomework.beginTime!=''">
+            ,begin_time=#{ellSkipHomework.beginTime}
+        </if>
+        <if test="ellSkipHomework.endTime!=null and ellSkipHomework.endTime!=''">
+            ,end_time=#{ellSkipHomework.endTime}
+        </if>
+        where
+        id=#{ellSkipHomework.id}
+        <if test="ellSkipHomework.createBy!=1 and ellSkipHomework.createBy!=0 ">
+            and create_by=#{ellSkipHomework.createBy}
+        </if>
+        <if test="ellSkipHomework.state==0">
+            and state!=2
+        </if>
+    </update>
+    <delete id="delHomework">
+        delete
+        from ell_skip_homework
+        where id = #{homeworkId}
+    </delete>
+    <select id="selContest" resultType="com.eluolang.physical.model.EllSkipContestVo">
+        select *
+        from ell_skip_contest
+        where is_delete=0
+        <if test="ellSelContestVo.createBy!=0 and ellSelContestVo.createBy!=1">
+            and create_by=#{ellSelContestVo.createBy}
+        </if>
+        <if test="ellSelContestVo.id!=null and ellSelContestVo.id!=''">
+            and id=#{ellSelContestVo.id}
+        </if>
+        <if test="ellSelContestVo.conTitle!=null and ellSelContestVo.conTitle!=''">
+            and con_title=#{ellSelContestVo.conTitle}
+        </if>
+        <if test="ellSelContestVo.conPattern!=null and ellSelContestVo.conPattern!=''">
+            and con_pattern=#{ellSelContestVo.conPattern}
+        </if>
+        <if test="ellSelContestVo.createTime!=null and ellSelContestVo.createTime!=''">
+            and create_time=#{ellSelContestVo.createTime}
+        </if>
+        <if test="ellSelContestVo.conState!=null and ellSelContestVo.conState!=''">
+            and con_state=#{ellSelContestVo.conState}
+        </if>
+        <if test="ellSelContestVo.conBeginTime!=null and ellSelContestVo.conBeginTime!=''">
+            and con_begin_time=#{ellSelContestVo.conBeginTime}
+        </if>
+        <if test="ellSelContestVo.conEndTime!=null and ellSelContestVo.conEndTime!=''">
+            and con_end_time=#{ellSelContestVo.con.EndTime}
+        </if>
+        <if test="ellSelContestVo.regBeginTime!=null and ellSelContestVo.regBeginTime!=''">
+            and reg_begin_time=#{ellSelContestVo.regBeginTime}
+        </if>
+        <if test="ellSelContestVo.regEndTime!=null and ellSelContestVo.regEndTime!=''">
+            and reg_end_time=#{ellSelContestVo.regEndTime}
+        </if>
+    </select>
+    <select id="findContestUser" resultType="com.eluolang.physical.model.EllFindSkipJoinContestUserVo">
+        SELECT
+        esjc.state,
+        esjc.user_name,
+        esjc.age,
+        esjc.con_number,
+        esn.skip_time,
+        esn.skip_pattern,
+        esn.skip_num,
+        fm.file_url,
+        esjc.skip_ranking,
+        esu.phone
+        FROM ell_skip_join_contest esjc
+        LEFT JOIN ell_skip_number esn on esjc.skip_num_id = esn.id
+        left join ell_skip_user esu on esjc.skip_user_id=esu.id
+        LEFT JOIN file_mgr fm on fm.id = esjc.skip_video_id
+        WHERE esjc.con_test_id = #{ellSkipFindContestUserVo.conTestId}
+        <if test="ellSkipFindContestUserVo.skipUserId!=null and ellSkipFindContestUserVo.skipUserId!=''">
+            and esjc.skip_user_id=#{ellSkipFindContestUserVo.skipUserId}
+        </if>
+        <if test="ellSkipFindContestUserVo.conNumber!=null and ellSkipFindContestUserVo.conNumber!=''">
+            and esjc.con_number=#{ellSkipFindContestUserVo.conNumber}
+        </if>
+        <if test="ellSkipFindContestUserVo.phone!=null and ellSkipFindContestUserVo.phone!=''">
+            and esu.phone=#{ellSkipFindContestUserVo.phone}
+        </if>
+        ORDER BY esjc.skip_ranking asc
+    </select>
+    <select id="findHomework" resultType="com.eluolang.physical.model.EllSkipHomeworkVo">
+        select esh.*,esh.use_org_id as useOrg from ell_skip_homework esh
+        left join pf_depart pd on pd.id=esh.use_org_id
+        where 1=1
+        <if test="ellSkipHomeworkVo.id!=null and ellSkipHomeworkVo.id!=''">
+            and esh.id=#{ellSkipHomeworkVo.id}
+        </if>
+        <if test="ellSkipHomeworkVo.workName!=null and ellSkipHomeworkVo.workName!=''">
+            and esh.work_name like concat('%',#{ellSkipHomeworkVo.workName},'%')
+        </if>
+        <if test="ellSkipHomeworkVo.teacherName!=null and ellSkipHomeworkVo.teacherName!=''">
+            and esh.teacher_name like concat('%',#{ellSkipHomeworkVo.teacherName},'%')
+        </if>
+        <if test="ellSkipHomeworkVo.useOrgId!=null and ellSkipHomeworkVo.useOrgId!=''">
+            and esh.use_org_id =#{ellSkipHomeworkVo.userOrgId}
+        </if>
+        <if test="ellSkipHomeworkVo.workPattern!=null and ellSkipHomeworkVo.workPattern!=''">
+            and esh.work_pattern=#{ellSkipHomeworkVo.workPattern}
+        </if>
+        <if test="ellSkipHomeworkVo.state!=0">
+            and esh.state=#{ellSkipHomeworkVo.state}
+        </if>
+        <if test="ellSkipHomeworkVo.createBy != 1 and ellSkipHomeworkVo.createBy != 0">
+            and SUBSTRING_INDEX(esh.use_org_id,',',LENGTH(use_org_id)) in (select rat from pf_operator_rat where opt_id
+            =
+            #{ellSkipHomeworkVo.createBy} and
+            `module` = 2)
+        </if>
+        group by esh.id
+    </select>
+    <select id="selHomeworkAccomplish" resultType="com.eluolang.physical.model.EllFindHomeworkVo">
+        select eu.user_name,
+        eu.id as userId,
+        esn.skip_time as time,
+        esn.skip_num as num,
+        ed.dept_name as className,
+        ed.id as orgId,
+        If(esn.id is not NULL or esn.id!='',1,0 ) as state,
+        esh.work_pattern,
+        esh.work_setting
+        from ell_user eu
+        left join ell_skip_homework esh on esh.id=#{ellFindHomeworkVo.homeworkId}
+        left join ell_skip_number esn on esn.homework_id = esh.id and eu.id=esn.skip_user_id
+        left join pf_depart ed on ed.id = eu.org_id
+        where
+        esh.use_org_id like concat('%',eu.org_id,'%') and eu.is_delete=0
+        <if test="ellFindHomeworkVo.orgId!=null and ellFindHomeworkVo.orgId!=0">
+            and eu.org_id=#{ellFindHomeworkVo.orgId}
+        </if>
+        <if test="ellFindHomeworkVo.userName!=null and ellFindHomeworkVo.userName!=''">
+            and eu.user_name like concat('%',#{ellFindHomeworkVo.userName},'%')
+        </if>
+    </select>
+</mapper>

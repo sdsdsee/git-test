@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.eluolang.platform.mapper.GardenMapper">
+    <select id="selAlarm" resultType="com.eluolang.platform.vo.EllAlarmVo">
+        select ed.device_name, eda.alarm_time
+        from ell_smart_device_management ed
+        left join ell_device_alarm eda on eda.device_id = ed.id
+        where ed.is_delete = 0
+        <if test="deviceType!=0">
+            and ed.device_type=#{deviceType}
+        </if>
+        <if test="createBy!=0 and createBy!=1">
+            and ed.id in (select rat from pf_operator_rat where opt_id=#{createBy})
+        </if>
+        order by eda.alarm_time desc
+    </select>
+    <select id="selElectricity" resultType="java.lang.Integer">
+        select IFNULL(sum(use_electricity),0)
+        from ell_electric_quantity eeq
+        left join ell_smart_device_management ed on ed.id=eeq.device_id and ed.is_delete=0
+        <if test="deviceType!=0">and ed.device_type=#{deviceType}</if>
+        where
+        MONTH(eeq.create_time)=IF(#{lastMonth}>=MONTH(NOW()),13-#{lastMonth},MONTH(now())-#{lastMonth}) and
+        year(eeq.create_time)=IF(#{lastMonth}>=MONTH(NOW()),year(now())-1,year(now()))
+
+        <if test="createBy!=0 and createBy!=1">
+            and eeq.device_id in (select rat from pf_operator_rat where
+            opt_id=#{createBy})
+        </if>
+    </select>
+    <select id="queryAllByLimit" resultType="com.eluolang.platform.vo.EllDeviceVo">
+        select
+        id,
+        device_id,device_name,device_ip,location_x,location_y,action_time,close_time,
+        is_delete,
+        location,
+        device_type
+        from ell_smart_device_management
+        <where>
+            is_delete = 0
+            <if test="ellDevice.id != null and ellDevice.id != ''">
+                and id = #{ellDevice.id}
+            </if>
+            <if test="ellDevice.deviceId != null and ellDevice.deviceId != ''">
+                and device_id = #{ellDevice.deviceId}
+            </if>
+            <if test="ellDevice.deviceName != null and ellDevice.deviceName != ''">
+                and device_name like concat('%',#{ellDevice.deviceName},'%')
+            </if>
+            <if test="ellDevice.deviceIp != null and ellDevice.deviceIp != ''">
+                and device_ip = #{ellDevice.deviceIp}
+            </if>
+            <if test="ellDevice.locationX != null and ellDevice.locationX != ''">
+                and location_x = #{ellDevice.locationX}
+            </if>
+            <if test="ellDevice.locationY != null and ellDevice.locationY != ''">
+                and location_y = #{ellDevice.locationY}
+            </if>
+            <if test="ellDevice.actionTime != null and ellDevice.actionTime != ''">
+                and action_time = #{ellDevice.actionTime}
+            </if>
+            <if test="ellDevice.closeTime != null and ellDevice.closeTime != ''">
+                and close_time = #{ellDevice.closeTime}
+            </if>
+            <if test="ellDevice.deviceType!=0">
+                and device_type=#{ellDevice.deviceType}
+            </if>
+            <if test="ellDevice.createBy!=0 and ellDevice.createBy!=1">
+                and id in (select rat from pf_operator_rat where opt_id=#{ellDevice.createBy} and module=2)
+            </if>
+        </where>
+    </select>
+    <select id="selDayElectricity" resultType="java.lang.Integer">
+        select IFNULL(sum(use_electricity),0)
+        from ell_electric_quantity eeq
+        left join ell_smart_device_management ed on ed.device_id=eeq.device_id
+        where to_days(eeq.create_time)=to_days(date_sub(now(),interval #{dayTime} day)) and ed.is_delete=0
+        <if test="deviceType!=0">
+            and ed.device_type=#{deviceType}
+        </if>
+        <if test="createBy!=0 and createBy!=1">
+            and eeq.device_id in (select rat from pf_operator_rat where
+            opt_id=#{createBy})
+        </if>
+    </select>
+    <select id="selDeviceNmeAndId" resultType="com.eluolang.platform.vo.EllDeNameAndId">
+        select ed.device_name, ed.device_id, IFNULL(count(eda.id), 0) as 'count'
+        from ell_smart_device_management ed
+        left join ell_device_alarm eda on eda.device_id = ed.id
+        where ed.is_delete=0
+        <if test="deviceType!=0">
+            and ed.device_type=#{deviceType}
+        </if>
+        <if test="createBy!=0 and createBy!=1">
+            and ed.id in(select rat from pf_operator_rat where opt_id=#{createBy} and module=2)
+        </if>
+        GROUP BY ed.id
+    </select>
+
+</mapper>

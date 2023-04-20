@@ -1,0 +1,62 @@
+# Tomcat
+server:
+  port: 8085
+# Spring
+spring:
+  application:
+    # 应用名称
+    name: ELL-physical
+  profiles:
+    # 环境配置
+    active: dev
+  cloud:
+    nacos:
+      discovery:
+        # 服务注册地址
+        server-addr: 127.0.0.1:8848
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+      config:
+        # 配置中心地址
+        server-addr: 127.0.0.1:8848
+        # 配置文件格式
+        file-extension: yml
+        # 命名空间
+        namespace: 2e87b4cc-40f5-4e15-a87e-b5022a7d01e8
+        # 共享配置
+        shared-dataids: application.${spring.cloud.nacos.config.file-extension}
+  servlet:
+    multipart:
+      #开启multipart上传功能
+      enabled: true
+      #文件写入磁盘的阈值
+      file-size-threshold: 2KB
+      #上传最大文件大小
+      max-file-size: 200MB
+      #最大请求文件大小
+      max-request-size: 200MB
+  #来禁用基于类的代理避免  @Transactional 让@Autowired依赖注入为空
+  aop:
+    proxy-target-class: false
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          strategy: THREAD
+          thread:
+            timeoutInMilliseconds: 120000  #超过此时间后进入熔断，这个时间应该大于后端及其ribbon的时间，否则后端接口未执行完就进入熔断
+ribbon:
+  ReadTimeout: 120000  #ribbon读取超时时间，接口处理时间，不包括建立连接时间
+  ConnectTimeout: 70000 #ribbon请求连接时间
+#  #数据源
+#  datasource:
+#    type: com.mysql.cj.jdbc.MysqlDataSource
+#    url: jdbc:mysql://192.168.10.28:3306/ibp?characterEncoding=UTF-8&useSSL=false&useUnicode=true&serverTimezone=UTC&allowMultiQueries=true
+#    url: jdbc:mysql://192.168.110.235:3306/ibp?characterEncoding=UTF-8&useSSL=false&useUnicode=true&serverTimezone=UTC&allowMultiQueries=true
+#    username: root
+#    password: root
+#日志 配合mybatis日志打印
+#logging:
+#  level:
+#    com.eluolang.physical.mapper: error
